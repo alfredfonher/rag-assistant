@@ -5,11 +5,11 @@ import (
 
 	"rag-assistant/service/internal/api"
 	"rag-assistant/service/internal/config"
-	"rag-assistant/service/internal/domain"
 	"rag-assistant/service/internal/ingest"
 	"rag-assistant/service/internal/llama"
 	"rag-assistant/service/internal/persistence"
 	"rag-assistant/service/internal/query"
+	"rag-assistant/service/internal/readiness"
 )
 
 type App struct {
@@ -49,9 +49,7 @@ func New() (*App, error) {
 	}
 
 	server := api.NewServerWithDeps(cfg.ServiceName, api.ServerDeps{
-		Readiness: api.StaticReadiness{
-			Response: domain.ReadinessResponse{Ready: true},
-		},
+		Readiness: readiness.LlamaReadiness{Client: llamaClient},
 		Ingest:        ingest.New(persistentRetriever),
 		Query:         query.New(persistentRetriever, llama.NewComposer(llamaClient), conversationStore),
 		Agents:        agentRepo,

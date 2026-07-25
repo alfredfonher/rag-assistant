@@ -44,6 +44,18 @@ bash scripts/models.sh verify
 
 `GET /healthz` remains HTTP 200 with its existing `status`, model paths, and lazy `*_loaded` booleans. It adds `embedding_verified` and `llm_verified`, which are true only when the manifest digest, immutable tuple, receipt, and current file fingerprint match. Health checks never load models; lazy-loaded state is telemetry, not readiness.
 
+## Readiness
+
+`GET /readyz` returns HTTP 200 when the llama-server dependency is reachable and both embedding and LLM models are loaded. Returns HTTP 503 with dependency reasons when the server is unreachable or models are not loaded. Readiness never loads models; it checks the existing health endpoint.
+
+## End-to-end smoke test
+
+```bash
+bash scripts/smoke.sh
+```
+
+Requires a running llama-server on port 8090 (configurable via `RAG_LLAMA_PORT`). The smoke test ingests `scripts/fixtures/smoke.md`, queries for the answer, verifies the readiness endpoint, and proves no GGUF binaries or temp files leak into the data directory. On failure, it cleans up all managed processes and temp data.
+
 ## Rollback
 
 To roll back PR1, revert the PR1 setup, manifest, model-script, receipt-health, test, and documentation changes. Do not delete ignored `models/*.gguf`; a later bootstrap can reuse them after verification. Do not commit model binaries or `.env`.
