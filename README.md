@@ -32,7 +32,7 @@ PR2 provides deterministic start/stop/status with:
 - **Idempotent start**: skip if already running with matching identity
 - **Graceful shutdown**: SIGTERM with configurable timeout, then SIGKILL fallback
 - **Atomic PID files**: written via temp+rename, stale detection via `kill -0`
-- **Go graceful shutdown**: `main.go` handles SIGTERM/SIGINT with 10s drain timeout
+- **Go graceful shutdown**: `main.go` handles SIGTERM/SIGINT with 3s drain timeout
 
 Environment variables: `RAG_DATA_DIR`, `RAG_LOG_DIR`, `RAG_SHUTDOWN_TIMEOUT` (default 5s).
 

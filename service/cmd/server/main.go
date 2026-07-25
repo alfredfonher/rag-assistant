@@ -38,7 +38,7 @@ func main() {
 	sig := <-quit
 	log.Printf("received %s, shutting down gracefully...", sig)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {

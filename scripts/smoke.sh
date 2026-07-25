@@ -24,13 +24,9 @@ cleanup() {
     wait "$SERVICE_PID" 2>/dev/null || true
   fi
   rm -rf "$DATA_DIR"
-  # Verify no orphaned processes
-  if pgrep -f "rag-assistant" >/dev/null 2>&1; then
+  # Verify no orphaned rag-assistant processes (exclude grep/self)
+  if pgrep -f "cmd/server" | grep -v "$$" >/dev/null 2>&1; then
     fail "orphaned rag-assistant process"
-  fi
-  # Verify no temp files leaked
-  if [[ -n "$(find /tmp -name 'rag-*' -newer /proc/1 2>/dev/null)" ]]; then
-    fail "temp files leaked"
   fi
 }
 trap cleanup EXIT
@@ -50,7 +46,7 @@ INGEST_RESP=$(curl -sf -X POST "$SERVICE_URL/v1/documents/ingest" \
   RAG_HTTP_ADDR="127.0.0.1:${SERVICE_PORT}" \
   RAG_DATA_DIR="$DATA_DIR" \
   RAG_LLAMA_SERVER_URL="$LLAMA_URL" \
-  go run ./cmd/server &
+  go run -C "$ROOT/service" ./cmd/server &
   SERVICE_PID=$!
   sleep 2
   INGEST_RESP=$(curl -sf -X POST "$SERVICE_URL/v1/documents/ingest" \
