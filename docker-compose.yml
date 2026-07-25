@@ -30,6 +30,7 @@ services:
       - RAG_DATA_DIR=/data
     volumes:
       - rag-data:/data
+      - ./docs:/docs:ro
     depends_on:
       llama-server:
         condition: service_healthy
