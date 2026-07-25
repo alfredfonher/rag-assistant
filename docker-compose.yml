@@ -7,9 +7,10 @@ services:
       - "8090:8090"
     volumes:
       - ./models:/models:ro
+      - /home/aprog/.lmstudio/models/modelos_mios/Qwen3.5-0.8B.Q5_K_M:/models/qwen:ro
     environment:
       - RAG_EMBEDDING_MODEL=/models/nomic-embed-text-v1.5.f32.gguf
-      - RAG_LLM_MODEL=/models/gemma-3-1b-it-Q4_K_M.gguf
+      - RAG_LLM_MODEL=/models/qwen/Qwen3.5-0.8B.Q5_K_M.gguf
       - RAG_LLAMA_HOST=0.0.0.0
       - RAG_LLAMA_PORT=8090
     healthcheck:
