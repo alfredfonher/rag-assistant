@@ -17,6 +17,7 @@ type queryModel struct {
 	cites   []serviceapi.Citation
 	err     string
 	loading bool
+	stream  bool
 	width   int
 }
 
@@ -43,20 +44,33 @@ type queryResultMsg struct {
 	err    error
 }
 
-func (m queryModel) submit() tea.Cmd {
+type streamFrameMsg struct {
+	frame serviceapi.QueryResponse
+	next  func() (serviceapi.QueryResponse, error)
+	done  bool
+}
+
+func (m queryModel) submitStream() tea.Cmd {
 	return func() tea.Msg {
 		q := strings.TrimSpace(m.input.Value())
 		if q == "" {
 			return queryResultMsg{err: fmt.Errorf("empty query")}
 		}
-		resp, err := m.client.Query(context.Background(), serviceapi.QueryRequest{Query: q})
+		stream, err := m.client.StreamQuery(context.Background(), serviceapi.QueryRequest{Query: q})
 		if err != nil {
 			return queryResultMsg{err: err}
 		}
-		if resp.Error != nil {
-			return queryResultMsg{err: fmt.Errorf("%s", resp.Error.Message)}
+		// Read first frame
+		frame, err := stream.Next()
+		if err != nil {
+			stream.Close()
+			return queryResultMsg{err: err}
 		}
-		return queryResultMsg{answer: resp.Answer, cites: resp.Citations}
+		return streamFrameMsg{
+			frame: frame,
+			next:  stream.Next,
+			done:  false,
+		}
 	}
 }
 
@@ -66,19 +80,58 @@ func (m queryModel) Update(msg tea.Msg) (queryModel, tea.Cmd) {
 		switch msg.Type {
 		case tea.KeyEnter:
 			m.loading = true
+			m.stream = true
 			m.answer = ""
 			m.cites = nil
 			m.err = ""
-			return m, m.submit()
+			return m, m.submitStream()
 		case tea.KeyEsc:
 			m.input.Reset()
 			m.answer = ""
 			m.cites = nil
 			m.err = ""
+			m.stream = false
 			return m, nil
 		}
+	case streamFrameMsg:
+		m.loading = false
+		// Accumulate answer from content frames
+		if msg.frame.Answer != "" {
+			m.answer = msg.frame.Answer
+		}
+		// Capture citations
+		if len(msg.frame.Citations) > 0 {
+			m.cites = msg.frame.Citations
+		}
+		// Check for errors
+		if msg.frame.Error != nil {
+			m.err = msg.frame.Error.Message
+			m.stream = false
+			return m, nil
+		}
+		// Done event
+		if msg.frame.Event == "done" {
+			m.stream = false
+			return m, nil
+		}
+		// Read next frame
+		if msg.next != nil {
+			return m, func() tea.Msg {
+				frame, err := msg.next()
+				if err != nil {
+					return queryResultMsg{err: err}
+				}
+				return streamFrameMsg{
+					frame: frame,
+					next:  msg.next,
+					done:  false,
+				}
+			}
+		}
+		m.stream = false
 	case queryResultMsg:
 		m.loading = false
+		m.stream = false
 		if msg.err != nil {
 			m.err = msg.err.Error()
 		} else {
@@ -98,7 +151,12 @@ func (m queryModel) View() string {
 	b.WriteString(m.input.View() + "\n")
 
 	if m.loading {
-		b.WriteString(mutedStyle.Render("  thinking..."))
+		b.WriteString(mutedStyle.Render("  connecting..."))
+	} else if m.stream {
+		b.WriteString(mutedStyle.Render("  streaming..."))
+		if m.answer != "" {
+			b.WriteString("\n" + answerStyle.Render("  "+m.answer+"▌"))
+		}
 	} else if m.err != "" {
 		b.WriteString(errorStyle.Render("  ✗ "+m.err))
 	} else if m.answer != "" {

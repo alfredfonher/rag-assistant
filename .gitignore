@@ -11,3 +11,4 @@ runtime-data/
 # Local model weights
 *.gguf
 client/tui
+ui_systemm_rag/

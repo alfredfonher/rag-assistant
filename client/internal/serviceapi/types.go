@@ -33,6 +33,8 @@ type Citation struct {
 
 type QueryResponse struct {
 	State          string     `json:"state"`
+	Event          string     `json:"event,omitempty"`
+	Kind           string     `json:"kind,omitempty"`
 	Answer         string     `json:"answer,omitempty"`
 	Citations      []Citation `json:"citations,omitempty"`
 	ConversationID string     `json:"conversation_id,omitempty"`

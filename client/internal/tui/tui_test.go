@@ -102,6 +102,85 @@ func TestQueryLoadingState(t *testing.T) {
 	}
 }
 
+func TestStreamFrameAccumulatesAnswer(t *testing.T) {
+	m := New(serviceapi.New("http://localhost:9999"))
+	m.query.stream = true
+
+	callCount := 0
+	fakeNext := func() (serviceapi.QueryResponse, error) {
+		callCount++
+		switch callCount {
+		case 1:
+			return serviceapi.QueryResponse{Kind: "content", Answer: "Hello "}, nil
+		case 2:
+			return serviceapi.QueryResponse{Kind: "content", Answer: "Hello World"}, nil
+		default:
+			return serviceapi.QueryResponse{Event: "done"}, nil
+		}
+	}
+
+	// Content frame
+	m.query, _ = m.query.Update(streamFrameMsg{
+		frame: serviceapi.QueryResponse{Kind: "content", Answer: "Hello "},
+		next:  fakeNext,
+	})
+	if m.query.answer != "Hello " {
+		t.Fatalf("expected 'Hello ', got %q", m.query.answer)
+	}
+	if !m.query.stream {
+		t.Fatal("stream should still be active")
+	}
+
+	// More content
+	m.query, _ = m.query.Update(streamFrameMsg{
+		frame: serviceapi.QueryResponse{Kind: "content", Answer: "Hello World"},
+		next:  fakeNext,
+	})
+	if m.query.answer != "Hello World" {
+		t.Fatalf("expected 'Hello World', got %q", m.query.answer)
+	}
+
+	// Done frame
+	m.query, _ = m.query.Update(streamFrameMsg{
+		frame: serviceapi.QueryResponse{Event: "done"},
+		next:  fakeNext,
+	})
+	if m.query.stream {
+		t.Fatal("stream should be done")
+	}
+}
+
+func TestStreamFrameError(t *testing.T) {
+	m := New(serviceapi.New("http://localhost:9999"))
+
+	m.query, _ = m.query.Update(streamFrameMsg{
+		frame: serviceapi.QueryResponse{
+			Error: &serviceapi.APIError{Message: "model unavailable"},
+		},
+	})
+
+	if m.query.err == "" {
+		t.Fatal("error should be set")
+	}
+	if m.query.stream {
+		t.Fatal("stream should stop on error")
+	}
+}
+
+func TestStreamFrameCitations(t *testing.T) {
+	m := New(serviceapi.New("http://localhost:9999"))
+
+	m.query, _ = m.query.Update(streamFrameMsg{
+		frame: serviceapi.QueryResponse{
+			Citations: []serviceapi.Citation{{DocumentID: "doc1", ChunkID: "c1"}},
+		},
+	})
+
+	if len(m.query.cites) != 1 {
+		t.Fatal("citations should be captured")
+	}
+}
+
 func TestStatusTabView(t *testing.T) {
 	m := New(serviceapi.New("http://localhost:9999"))
 	m.active = tabStatus
