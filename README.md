@@ -1,6 +1,6 @@
 # rag-assistant local runtime
 
-This repository runs the Go RAG service beside the Python llama.cpp service without Docker. PR1 provides reproducible prerequisites, immutable model acquisition, and receipt-backed Python health telemetry.
+This repository runs the Go RAG service beside the Python llama.cpp service without Docker. PR1 provides reproducible prerequisites, immutable model acquisition, and receipt-backed Python health telemetry. PR2 adds lifecycle management with start/stop/status, PID identity safety, and graceful signal shutdown.
 
 ## Clean-clone quick path
 
@@ -13,11 +13,28 @@ bash scripts/tests/models.sh
 llama-server/.venv/bin/python -m pytest -q llama-server/tests/test_server.py
 ```
 
-`scripts/bootstrap.sh` requires Linux, Bash 4.4+, Python **3.12**, `uv`, `curl`, GNU `sha256sum`, `setsid`, `flock`, and Go 1.22+. It reports every missing prerequisite and a remediation before changing environment state. `models.sh fetch` resumes `.partial` files, verifies the exact pinned SHA-256, atomically installs the GGUF, and writes `.rag-assistant/verified-models.tsv`. Repeating fetch is safe and does not rewrite verified artifacts.
+`scripts/bootstrap.sh` requires Linux, Bash 4.4+, Python **3.12**, `uv`, `curl`, GNU `sha256sum`, `setsid`, and Go 1.22+. It reports every missing prerequisite and a remediation before changing environment state. `models.sh fetch` resumes `.partial` files, verifies the exact pinned SHA-256, atomically installs the GGUF, and writes `.rag-assistant/verified-models.tsv`. Repeating fetch is safe and does not rewrite verified artifacts.
 
 ## Configuration
 
 `.env` is optional. Shell values supplied on the command line take precedence over file values; parsing accepts literal assignments only and never evaluates shell code. Model binaries, partial downloads, `.env`, and verification state are ignored by Git.
+
+## Lifecycle management
+
+```bash
+bash scripts/runtime.sh start <service-name> <command...>
+bash scripts/runtime.sh status <service-name>
+bash scripts/runtime.sh stop <service-name>
+```
+
+PR2 provides deterministic start/stop/status with:
+- **PID identity safety**: rejects reused PID/PGID/UID/cmdline/start-time
+- **Idempotent start**: skip if already running with matching identity
+- **Graceful shutdown**: SIGTERM with configurable timeout, then SIGKILL fallback
+- **Atomic PID files**: written via temp+rename, stale detection via `kill -0`
+- **Go graceful shutdown**: `main.go` handles SIGTERM/SIGINT with 10s drain timeout
+
+Environment variables: `RAG_DATA_DIR`, `RAG_LOG_DIR`, `RAG_SHUTDOWN_TIMEOUT` (default 5s).
 
 ## Verification and health
 
@@ -31,4 +48,6 @@ bash scripts/models.sh verify
 
 To roll back PR1, revert the PR1 setup, manifest, model-script, receipt-health, test, and documentation changes. Do not delete ignored `models/*.gguf`; a later bootstrap can reuse them after verification. Do not commit model binaries or `.env`.
 
-PR1 intentionally does not add lifecycle orchestration, Go shutdown/readiness changes, or the real-model smoke test; those belong to PR2 and PR3.
+To roll back PR2, revert `scripts/runtime.sh`, `scripts/lib/{process,wait}.sh`, `scripts/tests/runtime.sh`, and the Go signal-shutdown changes in `service/cmd/server/`. PR1 remains intact.
+
+PR2 intentionally does not add readiness probing, Go dependency-backed health, or the real-model smoke test; those belong to PR3.

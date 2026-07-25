@@ -9,7 +9,6 @@ need bash 'install Bash >= 4.4'
 need curl 'install curl'
 need sha256sum 'install coreutils'
 need setsid 'install util-linux'
-need flock 'install util-linux'
 need go 'install Go >= 1.22'
 if ((${#missing[@]})); then
   printf 'Missing prerequisites:\n'; printf ' - %s\n' "${missing[@]}"; exit 2
