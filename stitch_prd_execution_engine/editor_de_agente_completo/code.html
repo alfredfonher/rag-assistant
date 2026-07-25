@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Scientific RAG Terminal - Agent Editor</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-variant": "#2d3449",
+                        "status-error": "#EF4444",
+                        "on-tertiary-fixed": "#111c2d",
+                        "background": "#0b1326",
+                        "error-container": "#93000a",
+                        "on-secondary-container": "#00302b",
+                        "text-secondary": "#94A3B8",
+                        "inverse-on-surface": "#283044",
+                        "tertiary": "#bcc7de",
+                        "tertiary-container": "#566175",
+                        "secondary-fixed-dim": "#6bd8cb",
+                        "primary-container": "#4f46e5",
+                        "surface-container-high": "#222a3d",
+                        "border-subtle": "#334155",
+                        "surface-container-lowest": "#060e20",
+                        "on-tertiary": "#263143",
+                        "text-primary": "#F8FAFC",
+                        "surface-bright": "#31394d",
+                        "accent-teal": "#14B8A6",
+                        "on-tertiary-fixed-variant": "#3c475a",
+                        "surface-container-highest": "#2d3449",
+                        "on-secondary-fixed": "#00201d",
+                        "surface-container": "#171f33",
+                        "on-secondary": "#003732",
+                        "on-surface": "#dae2fd",
+                        "background-principal": "#0F172A",
+                        "secondary-container": "#29a195",
+                        "on-surface-variant": "#c7c4d8",
+                        "on-primary-fixed-variant": "#3323cc",
+                        "surface-secondary": "#1E293B",
+                        "error": "#ffb4ab",
+                        "on-primary": "#1d00a5",
+                        "status-warning": "#F59E0B",
+                        "surface-tint": "#c3c0ff",
+                        "on-tertiary-container": "#d1dcf4",
+                        "on-error-container": "#ffdad6",
+                        "status-success": "#22C55E",
+                        "outline": "#918fa1",
+                        "on-secondary-fixed-variant": "#005049",
+                        "tertiary-fixed-dim": "#bcc7de",
+                        "inverse-primary": "#4d44e3",
+                        "accent-indigo": "#6366F1",
+                        "tertiary-fixed": "#d8e3fb",
+                        "inverse-surface": "#dae2fd",
+                        "primary-fixed": "#e2dfff",
+                        "surface": "#0b1326",
+                        "on-primary-container": "#dad7ff",
+                        "surface-container-low": "#131b2e",
+                        "secondary-fixed": "#89f5e7",
+                        "surface-dim": "#0b1326",
+                        "primary-fixed-dim": "#c3c0ff",
+                        "on-background": "#dae2fd",
+                        "secondary": "#6bd8cb",
+                        "outline-variant": "#464555",
+                        "primary": "#c3c0ff",
+                        "on-primary-fixed": "#0f0069",
+                        "on-error": "#690005"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "max-content-width": "1200px",
+                        "margin-desktop": "24px",
+                        "gutter": "16px",
+                        "unit": "4px",
+                        "context-panel-width": "320px",
+                        "sidebar-width": "260px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Hanken Grotesk"],
+                        "body-md": ["Hanken Grotesk"],
+                        "headline-lg": ["Hanken Grotesk"],
+                        "code-sm": ["JetBrains Mono"],
+                        "headline-sm": ["Hanken Grotesk"],
+                        "label-caps": ["JetBrains Mono"],
+                        "body-sm": ["Hanken Grotesk"],
+                        "body-lg": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "code-sm": ["12px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "headline-sm": ["18px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                        "label-caps": ["11px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "body-sm": ["13px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "body-lg": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4f46e5;
+        }
+
+        .custom-range::-webkit-slider-runnable-track {
+            background: #1E293B;
+            height: 4px;
+            border-radius: 2px;
+        }
+        .custom-range::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #4f46e5;
+            cursor: pointer;
+            margin-top: -6px;
+            border: 2px solid #e2dfff;
+        }
+
+        /* Toggle Switch Styling */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 22px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #1E293B;
+            transition: .4s;
+            border-radius: 34px;
+            border: 1px solid #334155;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 3px;
+            bottom: 3px;
+            background-color: #94A3B8;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #4f46e5;
+            border-color: #4f46e5;
+        }
+        input:checked + .slider:before {
+            transform: translateX(22px);
+            background-color: white;
+        }
+    </style>
+</head>
+<body class="bg-background text-text-primary selection:bg-primary/30 font-body-md">
+<!-- Sidebar -->
+<aside class="fixed left-0 top-0 h-full w-sidebar-width bg-surface-container border-r border-border-subtle flex flex-col py-margin-desktop z-50">
+<div class="px-6 mb-8">
+<h1 class="font-headline-sm text-headline-sm font-bold text-text-primary">RAG Workspace</h1>
+<p class="font-label-caps text-label-caps text-text-secondary mt-1">Enterprise Terminal</p>
+</div>
+<nav class="flex-1 space-y-1">
+<div class="px-4 py-2 flex items-center gap-3 cursor-pointer transition-colors duration-150 text-text-secondary hover:text-text-primary hover:bg-surface-variant">
+<span class="material-symbols-outlined">add_comment</span>
+<span class="font-body-md">New Chat</span>
+</div>
+<div class="px-4 py-2 flex items-center gap-3 cursor-pointer transition-colors duration-150 text-text-secondary hover:text-text-primary hover:bg-surface-variant">
+<span class="material-symbols-outlined">chat</span>
+<span class="font-body-md">Conversations</span>
+</div>
+<div class="px-4 py-2 flex items-center gap-3 cursor-pointer transition-colors duration-150 text-text-secondary hover:text-text-primary hover:bg-surface-variant">
+<span class="material-symbols-outlined">description</span>
+<span class="font-body-md">Documents</span>
+</div>
+<div class="px-4 py-2 flex items-center gap-3 cursor-pointer transition-colors duration-150 text-text-secondary hover:text-text-primary hover:bg-surface-variant">
+<span class="material-symbols-outlined">folder_shared</span>
+<span class="font-body-md">Collections</span>
+</div>
+<div class="px-4 py-2 flex items-center gap-3 cursor-pointer transition-colors duration-150 bg-surface-secondary text-primary border-l-2 border-primary">
+<span class="material-symbols-outlined">smart_toy</span>
+<span class="font-body-md">Agents</span>
+</div>
+<div class="px-4 py-2 flex items-center gap-3 cursor-pointer transition-colors duration-150 text-text-secondary hover:text-text-primary hover:bg-surface-variant">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-body-md">Diagnostics</span>
+</div>
+<div class="px-4 py-2 flex items-center gap-3 cursor-pointer transition-colors duration-150 text-text-secondary hover:text-text-primary hover:bg-surface-variant">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md">Settings</span>
+</div>
+</nav>
+<div class="px-6 mt-auto">
+<div class="flex items-center gap-3 p-3 rounded-lg bg-surface-container-high border border-border-subtle">
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-white font-bold">JD</div>
+<div class="overflow-hidden">
+<p class="font-body-sm text-text-primary truncate">Julian Drago</p>
+<p class="font-label-caps text-[10px] text-accent-teal">GPU: ACTIVE</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 right-0 w-[calc(100%-260px)] h-16 bg-background border-b border-border-subtle flex justify-between items-center px-margin-desktop z-40">
+<div class="flex items-center gap-4">
+<span class="font-headline-sm text-headline-sm font-semibold text-text-primary">Scientific RAG Terminal</span>
+<span class="text-border-subtle">/</span>
+<span class="font-label-caps text-label-caps text-text-secondary">AGENT_EDITOR_V2</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4 text-text-secondary">
+<span class="material-symbols-outlined cursor-pointer hover:text-primary transition-all duration-150">memory</span>
+<span class="material-symbols-outlined cursor-pointer hover:text-primary transition-all duration-150">database</span>
+<span class="material-symbols-outlined cursor-pointer hover:text-primary transition-all duration-150">account_circle</span>
+</div>
+<button class="flex items-center gap-2 px-4 py-1.5 rounded bg-primary-container border border-primary-container hover:bg-opacity-90 text-white transition-all duration-150" onclick="toggleTestPanel()">
+<span class="material-symbols-outlined text-[18px]">play_arrow</span>
+<span class="font-label-caps text-label-caps uppercase">Test Agent</span>
+</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-sidebar-width pt-16 min-h-screen flex">
+<!-- Editor Section -->
+<div class="flex-1 overflow-y-auto pb-40 transition-all duration-300" id="editor-container">
+<div class="max-w-4xl mx-auto p-margin-desktop space-y-12">
+<!-- Section 1: Identity -->
+<section class="space-y-6">
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined">fingerprint</span>
+<h2 class="font-headline-md">Identity</h2>
+</div>
+<div class="grid grid-cols-12 gap-6 bg-surface-container-low p-6 rounded border border-border-subtle">
+<div class="col-span-12 md:col-span-4 flex flex-col items-center justify-center border-2 border-dashed border-border-subtle rounded-lg p-6 hover:border-primary transition-colors cursor-pointer group">
+<div class="w-20 h-20 bg-surface-variant rounded-xl flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[40px] text-primary">biotech</span>
+</div>
+<span class="font-label-caps text-label-caps text-text-secondary">Change Avatar</span>
+</div>
+<div class="col-span-12 md:col-span-8 space-y-4">
+<div>
+<label class="block font-label-caps text-label-caps text-text-secondary mb-2 uppercase">Agent Name</label>
+<input class="w-full bg-surface border border-border-subtle rounded px-4 py-2.5 font-body-md text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all" placeholder="e.g. Molecular Synthesis Expert" type="text"/>
+</div>
+<div>
+<label class="block font-label-caps text-label-caps text-text-secondary mb-2 uppercase">Short Description</label>
+<textarea class="w-full bg-surface border border-border-subtle rounded px-4 py-2.5 font-body-md text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all resize-none" placeholder="Primary role and scope of this specialized RAG entity..." rows="2"></textarea>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 2: Behavioral Directives -->
+<section class="space-y-6">
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined">terminal</span>
+<h2 class="font-headline-md">Behavioral Directives</h2>
+</div>
+<div class="bg-surface-container-low p-6 rounded border border-border-subtle space-y-6">
+<div>
+<div class="flex justify-between items-center mb-2">
+<label class="font-label-caps text-label-caps text-text-secondary uppercase">System Prompt (The "Identity Shell")</label>
+<span class="font-code-sm text-code-sm text-accent-indigo">Markdown Supported</span>
+</div>
+<textarea class="w-full bg-surface border border-border-subtle rounded p-4 font-code-sm text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all" placeholder="Define the core logic, persona, and response constraints..." rows="6"></textarea>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div>
+<label class="block font-label-caps text-label-caps text-text-secondary mb-2 uppercase">Response Tone</label>
+<select class="w-full bg-surface border border-border-subtle rounded px-4 py-2.5 font-body-md text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all appearance-none cursor-pointer">
+<option>Professional &amp; Academic</option>
+<option>Concise &amp; Direct</option>
+<option>Explanatory &amp; Pedagogical</option>
+<option>Critical &amp; Analytical</option>
+</select>
+</div>
+<div>
+<label class="block font-label-caps text-label-caps text-text-secondary mb-2 uppercase">No-Evidence Policy</label>
+<input class="w-full bg-surface border border-border-subtle rounded px-4 py-2.5 font-body-md text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all" placeholder="Custom message if no RAG context found..." type="text" value="I cannot find specific evidence for this in the provided documents."/>
+</div>
+</div>
+<div>
+<label class="block font-label-caps text-label-caps text-text-secondary mb-2 uppercase">Specific Restrictions (Negative Constraints)</label>
+<textarea class="w-full bg-surface border border-border-subtle rounded px-4 py-2.5 font-body-md text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none transition-all resize-none" placeholder="e.g. Do not mention competitors, never provide medical advice..." rows="2"></textarea>
+</div>
+<div class="p-4 bg-primary-container/10 rounded border-l-2 border-primary">
+<p class="font-body-sm text-on-surface-variant">
+<span class="font-bold text-primary">Note:</span> Use <code>{context}</code> and <code>{query}</code> placeholders to explicitly map where RAG injections should occur in the output stream.
+                            </p>
+</div>
+</div>
+</section>
+<!-- Section 3: Knowledge Graph & Retrieval -->
+<section class="space-y-6">
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined">database</span>
+<h2 class="font-headline-md">Knowledge Graph &amp; Retrieval</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="bg-surface-container-low p-6 rounded border border-border-subtle space-y-4">
+<label class="block font-label-caps text-label-caps text-text-secondary mb-2 uppercase">Target Collections</label>
+<div class="space-y-2 max-h-48 overflow-y-auto pr-2">
+<label class="flex items-center gap-3 p-3 bg-surface rounded border border-border-subtle cursor-pointer hover:bg-surface-variant transition-colors">
+<input checked="" class="rounded border-border-subtle bg-background text-primary focus:ring-primary" type="checkbox"/>
+<div class="flex-1">
+<p class="font-body-md text-text-primary">Clinical Trial Repository</p>
+<p class="font-code-sm text-[10px] text-text-secondary">4.2 GB • 12,402 Documents</p>
+</div>
+</label>
+<label class="flex items-center gap-3 p-3 bg-surface rounded border border-border-subtle cursor-pointer hover:bg-surface-variant transition-colors">
+<input class="rounded border-border-subtle bg-background text-primary focus:ring-primary" type="checkbox"/>
+<div class="flex-1">
+<p class="font-body-md text-text-primary">ArXiv: Bioinformatics</p>
+<p class="font-code-sm text-[10px] text-text-secondary">1.8 GB • 4,510 Documents</p>
+</div>
+</label>
+<label class="flex items-center gap-3 p-3 bg-surface rounded border border-border-subtle cursor-pointer hover:bg-surface-variant transition-colors">
+<input class="rounded border-border-subtle bg-background text-primary focus:ring-primary" type="checkbox"/>
+<div class="flex-1">
+<p class="font-body-md text-text-primary">Internal PDF Archive</p>
+<p class="font-code-sm text-[10px] text-text-secondary">300 MB • 82 Documents</p>
+</div>
+</label>
+</div>
+</div>
+<div class="bg-surface-container-low p-6 rounded border border-border-subtle space-y-6">
+<div>
+<div class="flex justify-between items-center mb-4">
+<label class="font-label-caps text-label-caps text-text-secondary uppercase">Top-K Snippets</label>
+<span class="font-code-sm text-primary" id="k-val">5</span>
+</div>
+<input class="w-full h-1 bg-surface-variant rounded-lg appearance-none cursor-pointer custom-range" max="20" min="1" oninput="document.getElementById('k-val').innerText = this.value" type="range" value="5"/>
+</div>
+<div>
+<div class="flex justify-between items-center mb-4">
+<label class="font-label-caps text-label-caps text-text-secondary uppercase">Score Threshold</label>
+<span class="font-code-sm text-primary" id="score-val">0.72</span>
+</div>
+<input class="w-full h-1 bg-surface-variant rounded-lg appearance-none cursor-pointer custom-range" max="1" min="0" oninput="document.getElementById('score-val').innerText = this.value" step="0.01" type="range" value="0.72"/>
+<p class="text-[10px] font-body-sm text-text-secondary mt-2 italic">Higher values ensure higher relevance but may reduce recall.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 4: Capabilities (New) -->
+<section class="space-y-6">
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined">extension</span>
+<h2 class="font-headline-md">Capabilities</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+<!-- Capability Card: Memory -->
+<div class="bg-surface-container-low p-4 rounded border border-border-subtle flex flex-col justify-between hover:border-primary/50 transition-colors">
+<div class="mb-4">
+<div class="flex items-center justify-between mb-2">
+<span class="material-symbols-outlined text-primary">history</span>
+<label class="toggle-switch">
+<input checked="" type="checkbox"/>
+<span class="slider"></span>
+</label>
+</div>
+<h3 class="font-body-md font-semibold text-text-primary">Persistent Memory</h3>
+<p class="text-[11px] text-text-secondary mt-1 leading-relaxed">Retain context across multi-turn sessions.</p>
+</div>
+</div>
+<!-- Capability Card: Tools -->
+<div class="bg-surface-container-low p-4 rounded border border-border-subtle flex flex-col justify-between hover:border-primary/50 transition-colors">
+<div class="mb-4">
+<div class="flex items-center justify-between mb-2">
+<span class="material-symbols-outlined text-primary">construction</span>
+<label class="toggle-switch">
+<input type="checkbox"/>
+<span class="slider"></span>
+</label>
+</div>
+<h3 class="font-body-md font-semibold text-text-primary">Function Calling</h3>
+<p class="text-[11px] text-text-secondary mt-1 leading-relaxed">Allow agent to execute API calls and tools.</p>
+</div>
+</div>
+<!-- Capability Card: Citations -->
+<div class="bg-surface-container-low p-4 rounded border border-border-subtle flex flex-col justify-between hover:border-primary/50 transition-colors">
+<div class="mb-4">
+<div class="flex items-center justify-between mb-2">
+<span class="material-symbols-outlined text-primary">format_quote</span>
+<label class="toggle-switch">
+<input checked="" type="checkbox"/>
+<span class="slider"></span>
+</label>
+</div>
+<h3 class="font-body-md font-semibold text-text-primary">Inline Citations</h3>
+<p class="text-[11px] text-text-secondary mt-1 leading-relaxed">Force links to source documents in output.</p>
+</div>
+</div>
+<!-- Capability Card: Transparency -->
+<div class="bg-surface-container-low p-4 rounded border border-border-subtle flex flex-col justify-between hover:border-primary/50 transition-colors">
+<div class="mb-4">
+<div class="flex items-center justify-between mb-2">
+<span class="material-symbols-outlined text-primary">psychology</span>
+<label class="toggle-switch">
+<input type="checkbox"/>
+<span class="slider"></span>
+</label>
+</div>
+<h3 class="font-body-md font-semibold text-text-primary">Transparency</h3>
+<p class="text-[11px] text-text-secondary mt-1 leading-relaxed">Visible "Chain of Thought" reasoning logs.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 5: Generation Engine -->
+<section class="space-y-6">
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined">memory</span>
+<h2 class="font-headline-md">Generation Engine</h2>
+</div>
+<div class="bg-surface-container-low p-6 rounded border border-border-subtle">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<div class="space-y-4">
+<label class="block font-label-caps text-label-caps text-text-secondary uppercase">LLM Provider</label>
+<div class="space-y-2">
+<button class="w-full flex items-center justify-between p-3 bg-surface-secondary border border-primary rounded text-text-primary">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">hub</span>
+<span class="font-body-md">Qwen-72B-Instruct</span>
+</div>
+<span class="material-symbols-outlined">expand_more</span>
+</button>
+<p class="font-code-sm text-[10px] text-accent-teal">Latency: ~280ms/tok</p>
+</div>
+</div>
+<div class="space-y-6">
+<div>
+<div class="flex justify-between items-center mb-4">
+<label class="font-label-caps text-label-caps text-text-secondary uppercase">Temperature</label>
+<span class="font-code-sm text-primary" id="temp-val">0.15</span>
+</div>
+<input class="w-full h-1 bg-surface-variant rounded-lg appearance-none cursor-pointer custom-range" max="1" min="0" oninput="document.getElementById('temp-val').innerText = this.value" step="0.01" type="range" value="0.15"/>
+</div>
+<div>
+<div class="flex justify-between items-center mb-4">
+<label class="font-label-caps text-label-caps text-text-secondary uppercase">Frequency Penalty</label>
+<span class="font-code-sm text-primary" id="freq-val">0.00</span>
+</div>
+<input class="w-full h-1 bg-surface-variant rounded-lg appearance-none cursor-pointer custom-range" max="2" min="0" oninput="document.getElementById('freq-val').innerText = this.value" step="0.1" type="range" value="0"/>
+</div>
+</div>
+<div class="space-y-4">
+<label class="block font-label-caps text-label-caps text-text-secondary uppercase">Max Completion</label>
+<div class="flex items-center gap-4">
+<input class="flex-1 bg-surface border border-border-subtle rounded px-4 py-2.5 font-code-sm text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none" type="number" value="2048"/>
+<span class="font-label-caps text-label-caps text-text-secondary">Tokens</span>
+</div>
+<div class="flex items-center gap-2">
+<input checked="" class="rounded border-border-subtle bg-background text-primary focus:ring-primary" type="checkbox"/>
+<span class="font-body-sm text-text-secondary">Stream responses</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+<!-- Test Split View (Agent Tester Panel) -->
+<div class="hidden w-[400px] border-l border-border-subtle bg-surface-container flex flex-col transition-all duration-300 shadow-2xl" id="test-panel">
+<div class="p-4 border-b border-border-subtle flex items-center justify-between bg-surface-container-high">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">science</span>
+<h3 class="font-label-caps text-label-caps text-text-primary uppercase tracking-widest">Sandbox Execution</h3>
+</div>
+<button class="material-symbols-outlined text-text-secondary hover:text-error transition-colors" onclick="toggleTestPanel()">close</button>
+</div>
+<div class="flex-1 overflow-y-auto p-4 space-y-6">
+<!-- Final Prompt Inspector -->
+<div class="space-y-2">
+<div class="flex items-center justify-between">
+<label class="font-label-caps text-[10px] text-text-secondary uppercase">Constructed Prompt</label>
+<button class="text-[10px] text-primary hover:underline uppercase font-label-caps">Copy Prompt</button>
+</div>
+<div class="p-3 bg-background-principal rounded border border-border-subtle font-code-sm text-[11px] text-text-secondary max-h-40 overflow-y-auto leading-relaxed">
+<span class="text-accent-indigo font-bold">[SYSTEM]:</span> You are a Molecular Synthesis Expert. Use the provided {context} to answer the {query}...<br/><br/>
+<span class="text-accent-teal font-bold">[CONTEXT_INJECT]:</span> Searching clinical repositories... Found 3 relevant matches...
+                    </div>
+</div>
+<!-- Live Diagnostics -->
+<div class="grid grid-cols-2 gap-2">
+<div class="p-3 bg-surface-variant/30 rounded border border-border-subtle">
+<p class="font-label-caps text-[9px] text-text-secondary">TOKEN COUNT</p>
+<p class="font-code-sm text-primary">1,420</p>
+</div>
+<div class="p-3 bg-surface-variant/30 rounded border border-border-subtle">
+<p class="font-label-caps text-[9px] text-text-secondary">LATENCY</p>
+<p class="font-code-sm text-primary">1.2s</p>
+</div>
+</div>
+<!-- Chat History -->
+<div class="space-y-4" id="chat-history">
+<div class="p-3 bg-surface-variant rounded-lg border border-border-subtle">
+<p class="font-label-caps text-[10px] text-accent-indigo mb-1">SYSTEM_INIT</p>
+<p class="font-body-sm text-text-secondary">Agent initialized with current configuration. Awaiting test query...</p>
+</div>
+</div>
+</div>
+<!-- JSON Schema Validator -->
+<div class="px-4 py-2 bg-surface-container-low border-t border-border-subtle">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-[10px] text-text-secondary uppercase">Output Schema Validation</span>
+<span class="flex items-center gap-1 text-[10px] text-status-success uppercase font-bold"><span class="w-1.5 h-1.5 rounded-full bg-status-success"></span> Valid</span>
+</div>
+</div>
+<div class="p-4 border-t border-border-subtle bg-background">
+<div class="relative">
+<textarea class="w-full bg-surface-container-high border border-border-subtle rounded p-3 pr-10 font-body-sm text-text-primary focus:ring-1 focus:ring-primary focus:border-primary outline-none resize-none" placeholder="Type a test query..." rows="3"></textarea>
+<button class="absolute bottom-3 right-3 material-symbols-outlined text-primary hover:scale-110 transition-transform">send</button>
+</div>
+</div>
+</div>
+</main>
+<!-- Sticky Footer (Refined Action Bar) -->
+<footer class="fixed bottom-0 right-0 w-[calc(100%-260px)] h-20 bg-surface-container border-t border-border-subtle flex items-center justify-between px-margin-desktop z-50 shadow-[0_-10px_30px_rgba(0,0,0,0.3)]">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-status-success shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div>
+<span class="font-label-caps text-label-caps text-text-secondary uppercase">All validation passed</span>
+</div>
+<div class="h-4 w-[1px] bg-border-subtle"></div>
+<span class="font-code-sm text-code-sm text-text-secondary italic">Last autosave: 2m ago</span>
+</div>
+<div class="flex items-center gap-3">
+<button class="px-6 py-2.5 rounded font-label-caps text-label-caps text-text-secondary hover:text-text-primary hover:bg-surface-variant transition-colors uppercase border border-transparent">Cancel</button>
+<button class="px-6 py-2.5 rounded border border-border-subtle text-text-primary font-label-caps text-label-caps hover:border-primary transition-all uppercase" onclick="toggleTestPanel()">Save &amp; Test</button>
+<button class="px-8 py-2.5 rounded bg-primary-container text-white font-label-caps text-label-caps hover:bg-opacity-90 transition-all uppercase shadow-lg shadow-primary-container/20">Save &amp; Deploy Agent</button>
+</div>
+</footer>
+<script>
+        function toggleTestPanel() {
+            const panel = document.getElementById('test-panel');
+            
+            if (panel.classList.contains('hidden')) {
+                panel.classList.remove('hidden');
+                panel.classList.add('flex');
+            } else {
+                panel.classList.add('hidden');
+                panel.classList.remove('flex');
+            }
+        }
+
+        // Micro-interaction for range inputs
+        document.querySelectorAll('input[type=range]').forEach(input => {
+            input.addEventListener('mousedown', () => {
+                input.classList.add('scale-[1.01]');
+                input.style.transition = 'all 0.15s ease';
+            });
+            input.addEventListener('mouseup', () => {
+                input.classList.remove('scale-[1.01]');
+            });
+        });
+    </script>
+</body></html>

@@ -1,0 +1,12 @@
+# Python environments and caches
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local runtime state
+.rag-assistant/
+runtime-data/
+
+# Local model weights
+*.gguf

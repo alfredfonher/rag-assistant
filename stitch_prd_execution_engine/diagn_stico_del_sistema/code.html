@@ -1,0 +1,339 @@
+<!DOCTYPE html><html lang="en" class="dark"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet"><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">try{
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-error": "#690005",
+                        "on-primary-container": "#dad7ff",
+                        "inverse-primary": "#4d44e3",
+                        "on-tertiary-fixed-variant": "#3c475a",
+                        "inverse-on-surface": "#283044",
+                        "tertiary-fixed": "#d8e3fb",
+                        "surface-container": "#171f33",
+                        "accent-teal": "#14B8A6",
+                        "primary-container": "#4f46e5",
+                        "background-principal": "#0F172A",
+                        "text-secondary": "#94A3B8",
+                        "on-tertiary": "#263143",
+                        "surface-tint": "#c3c0ff",
+                        "surface-dim": "#0b1326",
+                        "secondary-fixed": "#89f5e7",
+                        "primary-fixed": "#e2dfff",
+                        "surface": "#0b1326",
+                        "on-tertiary-fixed": "#111c2d",
+                        "surface-container-highest": "#2d3449",
+                        "primary-fixed-dim": "#c3c0ff",
+                        "primary": "#c3c0ff",
+                        "on-surface-variant": "#c7c4d8",
+                        "on-secondary-fixed-variant": "#005049",
+                        "accent-indigo": "#6366F1",
+                        "surface-container-lowest": "#060e20",
+                        "on-background": "#dae2fd",
+                        "text-primary": "#F8FAFC",
+                        "surface-secondary": "#1E293B",
+                        "tertiary-container": "#566175",
+                        "status-warning": "#F59E0B",
+                        "outline-variant": "#464555",
+                        "on-primary-fixed-variant": "#3323cc",
+                        "status-success": "#22C55E",
+                        "surface-container-high": "#222a3d",
+                        "on-surface": "#dae2fd",
+                        "status-error": "#EF4444",
+                        "on-secondary-fixed": "#00201d",
+                        "on-secondary": "#003732",
+                        "error": "#ffb4ab",
+                        "surface-container-low": "#131b2e",
+                        "on-error-container": "#ffdad6",
+                        "error-container": "#93000a",
+                        "background": "#0b1326",
+                        "outline": "#918fa1",
+                        "secondary": "#6bd8cb",
+                        "on-primary-fixed": "#0f0069",
+                        "on-primary": "#1d00a5",
+                        "on-secondary-container": "#00302b",
+                        "secondary-fixed-dim": "#6bd8cb",
+                        "secondary-container": "#29a195",
+                        "on-tertiary-container": "#d1dcf4",
+                        "tertiary-fixed-dim": "#bcc7de",
+                        "surface-bright": "#31394d",
+                        "tertiary": "#bcc7de",
+                        "border-subtle": "#334155",
+                        "inverse-surface": "#dae2fd",
+                        "surface-variant": "#2d3449"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "sidebar-width": "260px",
+                        "context-panel-width": "320px",
+                        "max-content-width": "1200px",
+                        "margin-desktop": "24px",
+                        "gutter": "16px"
+                    },
+                    "fontFamily": {
+                        "code-sm": ["JetBrains Mono"],
+                        "headline-md": ["Hanken Grotesk"],
+                        "body-lg": ["Hanken Grotesk"],
+                        "headline-lg": ["Hanken Grotesk"],
+                        "body-sm": ["Hanken Grotesk"],
+                        "body-md": ["Hanken Grotesk"],
+                        "label-caps": ["JetBrains Mono"],
+                        "headline-sm": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "code-sm": ["12px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                        "body-lg": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                        "body-sm": ["13px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "label-caps": ["11px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "headline-sm": ["18px", {"lineHeight": "1.4", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    }catch(_e){}</script><meta charset="utf-8"></head><body class="bg-background text-on-background selection:bg-primary/30 selection:text-primary">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full w-sidebar-width bg-surface-container border-r border-border-subtle flex flex-col py-margin-desktop z-50">
+<div class="px-6 mb-8">
+<h1 class="font-headline-sm text-headline-sm font-bold text-text-primary tracking-tight">RAG Workspace</h1>
+<p class="font-body-md text-body-md text-text-secondary opacity-70">Enterprise Terminal</p>
+</div>
+<nav class="flex-1 space-y-1">
+<div class="px-4 py-2 flex items-center gap-3 text-text-secondary hover:bg-surface-variant transition-colors duration-150 cursor-pointer group">
+<span class="material-symbols-outlined group-hover:text-text-primary" data-original-icon="add_comment">add_comment</span>
+<span class="font-body-md text-body-md">New Chat</span>
+</div>
+<div class="px-4 py-2 flex items-center gap-3 text-text-secondary hover:bg-surface-variant transition-colors duration-150 cursor-pointer group">
+<span class="material-symbols-outlined group-hover:text-text-primary">chat</span>
+<span class="font-body-md text-body-md">Conversations</span>
+</div>
+<div class="px-4 py-2 flex items-center gap-3 text-text-secondary hover:bg-surface-variant transition-colors duration-150 cursor-pointer group">
+<span class="material-symbols-outlined group-hover:text-text-primary" data-original-icon="description">description</span>
+<span class="font-body-md text-body-md">Documents</span>
+</div>
+<div class="px-4 py-2 flex items-center gap-3 text-text-secondary hover:bg-surface-variant transition-colors duration-150 cursor-pointer group">
+<span class="material-symbols-outlined group-hover:text-text-primary" data-original-icon="folder_shared">folder_shared</span>
+<span class="font-body-md text-body-md">Collections</span>
+</div>
+<div class="px-4 py-2 flex items-center gap-3 text-text-secondary hover:bg-surface-variant transition-colors duration-150 cursor-pointer group">
+<span class="material-symbols-outlined group-hover:text-text-primary" data-original-icon="smart_toy">smart_toy</span>
+<span class="font-body-md text-body-md">Agents</span>
+</div>
+<!-- Active Tab: Diagnostics -->
+<div class="px-4 py-2 flex items-center gap-3 bg-surface-secondary text-primary border-l-2 border-primary cursor-pointer">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">analytics</span>
+<span class="font-body-md text-body-md font-semibold">Diagnostics</span>
+</div>
+<div class="px-4 py-2 flex items-center gap-3 text-text-secondary hover:bg-surface-variant transition-colors duration-150 cursor-pointer group">
+<span class="material-symbols-outlined group-hover:text-text-primary">settings</span>
+<span class="font-body-md text-body-md">Settings</span>
+</div>
+</nav>
+<div class="px-6 mt-auto pt-4 border-t border-border-subtle/30">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Professional high-end studio portrait of a technology lead with soft rim lighting and a blurred datacenter background. The aesthetic is clean, minimalist, and authoritative, matching a high-stakes enterprise environment with deep blues and cool tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDeBGFjw-mRRNpo1kanORvoHTVDpiVrYMcASo3WxduJ69yvSqhD8gwumC8w2uTB6NQ_qkDz6xsRTeG1tcGGaIum_9hjp8w6b69AJZYqIZcxh8LvEduTUzNa2gcgpXHYsMWO1GrvU6eB2HTQKoUSJ2zhkQVs0QnTzCcHDqhQqB6-gtIyBTJosGM80kqmFZOgiYoYI6BUVRdOxOnd5wWBOEWXCwVDZDwVEqekt14fpzRdFImzFjrmerNiQB2X_0lZQBqGyONB9IXGSKc">
+</div>
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-text-primary">System Admin</span>
+<span class="font-code-sm text-[10px] text-accent-teal">VERIFIED</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Workspace -->
+<main class="ml-sidebar-width min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="h-16 bg-background border-b border-border-subtle flex justify-between items-center px-margin-desktop sticky top-0 z-40">
+<div class="flex items-center gap-6">
+<span class="font-headline-sm text-headline-sm font-semibold text-text-primary">Scientific RAG Terminal</span>
+<div class="h-4 w-[1px] bg-border-subtle"></div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-status-success text-sm status-pulse" data-original-icon="fiber_manual_record">fiber_manual_record</span>
+<span class="font-label-caps text-label-caps text-text-secondary uppercase">System Health: Nominal</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="flex items-center gap-2 px-4 py-1.5 border border-primary text-primary hover:bg-primary/10 transition-all duration-150 rounded active:scale-95 group">
+<span class="material-symbols-outlined text-[18px] group-hover:rotate-180 transition-transform duration-500">sync</span>
+<span class="font-label-caps text-label-caps">Recheck Connection</span>
+</button>
+<div class="flex items-center gap-3 px-2">
+<span class="material-symbols-outlined text-text-secondary hover:text-text-primary cursor-pointer transition-colors">memory</span>
+<span class="material-symbols-outlined text-text-secondary hover:text-text-primary cursor-pointer transition-colors">database</span>
+<span class="material-symbols-outlined text-text-secondary hover:text-text-primary cursor-pointer transition-colors" data-original-icon="account_circle">account_circle</span>
+</div>
+</div>
+</header>
+<!-- Content Area -->
+<div class="flex-1 p-margin-desktop max-w-[1400px]">
+<!-- Page Header -->
+<div class="mb-8">
+<h2 class="font-headline-lg text-headline-lg text-text-primary">System Diagnostics</h2>
+<p class="font-body-md text-body-md text-text-secondary max-w-2xl mt-2">
+                    Real-time monitoring of RAG pipeline infrastructure. Monitor connectivity, latency, and hardware utilization across critical service nodes.
+                </p>
+</div>
+<!-- Diagnostics Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter mb-8">
+<!-- Backend Status -->
+<div class="bg-surface-container border border-border-subtle p-5 hover:border-accent-indigo transition-colors duration-200">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-accent-indigo">dns</span>
+<span class="font-code-sm text-code-sm text-status-success bg-status-success/10 px-2 py-0.5 rounded">ONLINE</span>
+</div>
+<div class="flex flex-col gap-1">
+<h3 class="font-label-caps text-label-caps text-text-secondary">Backend Status</h3>
+<p class="font-headline-sm text-headline-sm text-text-primary">Go API Cluster</p>
+</div>
+<div class="mt-4 flex items-center justify-between">
+<span class="font-body-sm text-body-sm text-text-secondary">Latency</span>
+<span class="font-code-sm text-code-sm text-accent-teal">12.4ms</span>
+</div>
+</div>
+<!-- LLM Server -->
+<div class="bg-surface-container border border-border-subtle p-5 hover:border-accent-indigo transition-colors duration-200">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-primary">psychology</span>
+<span class="font-code-sm text-code-sm text-status-success bg-status-success/10 px-2 py-0.5 rounded">ACTIVE</span>
+</div>
+<div class="flex flex-col gap-1">
+<h3 class="font-label-caps text-label-caps text-text-secondary">LLM Server</h3>
+<p class="font-headline-sm text-headline-sm text-text-primary">Mistral-7B-v0.3</p>
+</div>
+<div class="mt-4 flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<span class="font-body-sm text-body-sm text-text-secondary">VRAM Usage</span>
+<span class="font-code-sm text-code-sm text-text-primary">14.2 / 24 GB</span>
+</div>
+<div class="w-full bg-surface-container-highest h-1 rounded-full overflow-hidden">
+<div class="bg-primary h-full" style="width: 59%;"></div>
+</div>
+</div>
+</div>
+<!-- Vector DB -->
+<div class="bg-surface-container border border-border-subtle p-5 hover:border-accent-indigo transition-colors duration-200">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-accent-teal">hub</span>
+<span class="font-code-sm text-code-sm text-status-success bg-status-success/10 px-2 py-0.5 rounded">CONNECTED</span>
+</div>
+<div class="flex flex-col gap-1">
+<h3 class="font-label-caps text-label-caps text-text-secondary">Vector DB</h3>
+<p class="font-headline-sm text-headline-sm text-text-primary">Qdrant Node 04</p>
+</div>
+<div class="mt-4 flex items-center justify-between">
+<span class="font-body-sm text-body-sm text-text-secondary">Index Count</span>
+<span class="font-code-sm text-code-sm text-text-primary">1,240,482</span>
+</div>
+</div>
+<!-- Indexing Queue -->
+<div class="bg-surface-container border border-border-subtle p-5 hover:border-accent-indigo transition-colors duration-200">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-secondary">database_upload</span>
+<span class="font-code-sm text-code-sm text-text-secondary bg-surface-variant px-2 py-0.5 rounded">IDLE</span>
+</div>
+<div class="flex flex-col gap-1">
+<h3 class="font-label-caps text-label-caps text-text-secondary">Indexing Queue</h3>
+<p class="font-headline-sm text-headline-sm text-text-primary">Pipeline V2</p>
+</div>
+<div class="mt-4 flex items-center justify-between">
+<span class="font-body-sm text-body-sm text-text-secondary">Pending Tasks</span>
+<span class="font-headline-sm text-headline-sm text-text-primary">0</span>
+</div>
+</div>
+</div>
+<!-- Recent Logs Table -->
+<div class="bg-surface-container border border-border-subtle overflow-hidden">
+<div class="px-margin-desktop py-4 border-b border-border-subtle flex justify-between items-center bg-surface-container-high/30">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-text-secondary text-sm">terminal</span>
+<h3 class="font-headline-sm text-headline-sm text-text-primary">Recent Logs</h3>
+</div>
+<div class="flex gap-2">
+<span class="font-code-sm text-code-sm text-text-secondary px-3 py-1 bg-surface-container-high border border-border-subtle cursor-pointer hover:text-text-primary">Filter: ALL</span>
+<span class="font-code-sm text-code-sm text-text-secondary px-3 py-1 bg-surface-container-high border border-border-subtle cursor-pointer hover:text-text-primary">Export CSV</span>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-border-subtle bg-surface-container-high/10">
+<th class="py-3 px-6 font-label-caps text-label-caps text-text-secondary uppercase">Timestamp</th>
+<th class="py-3 px-6 font-label-caps text-label-caps text-text-secondary uppercase">Level</th>
+<th class="py-3 px-6 font-label-caps text-label-caps text-text-secondary uppercase">Source</th>
+<th class="py-3 px-6 font-label-caps text-label-caps text-text-secondary uppercase">Message</th>
+</tr>
+</thead>
+<tbody class="font-code-sm text-code-sm divide-y divide-border-subtle/50"><tr class="hover:bg-surface-variant/30 transition-colors"><td class="py-3 px-6 text-text-secondary">2023-11-24 14:02:11.432</td><td class="py-3 px-6"><span class="text-primary">INFO</span></td><td class="py-3 px-6 text-primary">RETRIEVAL_ENGINE</td><td class="py-3 px-6 text-on-surface">Successfully generated embedding for doc_4920.pdf [Top-k: 5]</td></tr><tr class="hover:bg-surface-variant/30 transition-colors"><td class="py-3 px-6 text-text-secondary">2023-11-24 14:01:58.910</td><td class="py-3 px-6"><span class="text-status-warning">WARN</span></td><td class="py-3 px-6 text-primary">API_GATEWAY</td><td class="py-3 px-6 text-on-surface">Throttling request from client 192.168.1.45 - rate limit near threshold</td></tr><tr class="hover:bg-surface-variant/30 transition-colors"><td class="py-3 px-6 text-text-secondary">2023-11-24 14:01:45.221</td><td class="py-3 px-6"><span class="text-primary">INFO</span></td><td class="py-3 px-6 text-primary">LLM_SERVICE</td><td class="py-3 px-6 text-on-surface">Inference completed in 842ms. Tokens: 512 (In) / 256 (Out)</td></tr><tr class="hover:bg-surface-variant/30 transition-colors"><td class="py-3 px-6 text-text-secondary">2023-11-24 13:58:12.001</td><td class="py-3 px-6"><span class="text-primary">INFO</span></td><td class="py-3 px-6 text-primary">SYSTEM</td><td class="py-3 px-6 text-on-surface">New telemetry baseline established for Qdrant Node 04</td></tr><tr class="hover:bg-surface-variant/30 transition-colors"><td class="py-3 px-6 text-text-secondary">2023-11-24 13:55:44.887</td><td class="py-3 px-6"><span class="text-primary">INFO</span></td><td class="py-3 px-6 text-primary">DOC_PIPELINE</td><td class="py-3 px-6 text-on-surface">Chunking optimization completed for collection 'Legal_Archive_2023'</td></tr><tr class="hover:bg-surface-variant/30 transition-colors"><td class="py-3 px-6 text-text-secondary">2023-11-24 13:52:10.334</td><td class="py-3 px-6"><span class="text-status-warning">WARN</span></td><td class="py-3 px-6 text-primary">GPU_MONITOR</td><td class="py-3 px-6 text-on-surface">Memory fragmentation detected on device:0. Triggering defrag process.</td></tr></tbody>
+</table>
+</div>
+<div class="px-6 py-4 border-t border-border-subtle bg-surface-container-high/10 flex justify-between items-center">
+<span class="font-body-sm text-body-sm text-text-secondary">Showing last 50 logs of 1,245</span>
+<div class="flex gap-4">
+<button class="text-text-secondary hover:text-primary transition-colors font-label-caps text-label-caps">Previous</button>
+<button class="text-primary hover:text-primary-container transition-colors font-label-caps text-label-caps">Next Page</button>
+</div>
+</div>
+</div>
+<!-- Health Snapshot Footer -->
+<div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<div class="flex items-center gap-4 bg-surface-container-low border border-border-subtle p-4 rounded">
+<div class="w-2 h-2 rounded-full bg-status-success"></div>
+<div>
+<p class="font-label-caps text-label-caps text-text-secondary uppercase">Uptime</p>
+<p class="font-headline-sm text-headline-sm text-text-primary">14d 02h 45m</p>
+</div>
+</div>
+<div class="flex items-center gap-4 bg-surface-container-low border border-border-subtle p-4 rounded">
+<div class="w-2 h-2 rounded-full bg-status-success"></div>
+<div>
+<p class="font-label-caps text-label-caps text-text-secondary uppercase">Throughput</p>
+<p class="font-headline-sm text-headline-sm text-text-primary">2.4k req/min</p>
+</div>
+</div>
+<div class="flex items-center gap-4 bg-surface-container-low border border-border-subtle p-4 rounded">
+<div class="w-2 h-2 rounded-full bg-status-warning"></div>
+<div>
+<p class="font-label-caps text-label-caps text-text-secondary uppercase">Error Rate</p>
+<p class="font-headline-sm text-headline-sm text-text-primary">0.02% (Global)</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<script>
+        // Micro-interaction for recheck button
+        document.querySelector('button').addEventListener('click', function() {
+            const btnText = this.querySelector('.font-label-caps');
+            const originalText = btnText.innerText;
+            btnText.innerText = "CHECKING...";
+            this.classList.add('opacity-50', 'pointer-events-none');
+            
+            setTimeout(() => {
+                btnText.innerText = originalText;
+                this.classList.remove('opacity-50', 'pointer-events-none');
+            }, 1500);
+        });
+
+        // Tonal layering hover effect enhancement
+        const cards = document.querySelectorAll('.bg-surface-container');
+        cards.forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-2px)';
+                card.style.transition = 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0)';
+            });
+        });
+    </script>
+
+</body></html>

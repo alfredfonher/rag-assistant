@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Scientific RAG Terminal - Document Indexing</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #131b2e;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #464555;
+        }
+        .shimmer {
+            background: linear-gradient(90deg, transparent, rgba(195, 192, 255, 0.1), transparent);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite linear;
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 12px;
+            width: 12px;
+            border-radius: 50%;
+            background: #c3c0ff;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(79, 70, 229, 0.5);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-surface-variant": "#c7c4d8",
+                      "on-secondary": "#003732",
+                      "secondary-fixed": "#89f5e7",
+                      "on-tertiary-fixed-variant": "#3c475a",
+                      "tertiary-fixed-dim": "#bcc7de",
+                      "tertiary": "#bcc7de",
+                      "on-secondary-fixed": "#00201d",
+                      "inverse-primary": "#4d44e3",
+                      "text-primary": "#F8FAFC",
+                      "inverse-surface": "#dae2fd",
+                      "surface-container-low": "#131b2e",
+                      "status-warning": "#F59E0B",
+                      "surface-container-lowest": "#060e20",
+                      "on-primary-container": "#dad7ff",
+                      "accent-indigo": "#6366F1",
+                      "tertiary-container": "#566175",
+                      "secondary-fixed-dim": "#6bd8cb",
+                      "surface-container": "#171f33",
+                      "on-tertiary": "#263143",
+                      "inverse-on-surface": "#283044",
+                      "accent-teal": "#14B8A6",
+                      "on-error-container": "#ffdad6",
+                      "surface-secondary": "#1E293B",
+                      "surface": "#0b1326",
+                      "error": "#ffb4ab",
+                      "error-container": "#93000a",
+                      "on-tertiary-container": "#d1dcf4",
+                      "on-error": "#690005",
+                      "surface-tint": "#c3c0ff",
+                      "outline-variant": "#464555",
+                      "on-surface": "#dae2fd",
+                      "surface-bright": "#31394d",
+                      "status-success": "#22C55E",
+                      "surface-variant": "#2d3449",
+                      "secondary-container": "#29a195",
+                      "on-primary": "#1d00a5",
+                      "on-secondary-fixed-variant": "#005049",
+                      "border-subtle": "#334155",
+                      "surface-container-high": "#222a3d",
+                      "outline": "#918fa1",
+                      "on-secondary-container": "#00302b",
+                      "background": "#0b1326",
+                      "on-tertiary-fixed": "#111c2d",
+                      "primary-container": "#4f46e5",
+                      "surface-container-highest": "#2d3449",
+                      "secondary": "#6bd8cb",
+                      "status-error": "#EF4444",
+                      "tertiary-fixed": "#d8e3fb",
+                      "primary-fixed": "#e2dfff",
+                      "primary-fixed-dim": "#c3c0ff",
+                      "on-primary-fixed-variant": "#3323cc",
+                      "surface-dim": "#0b1326",
+                      "background-principal": "#0F172A",
+                      "on-primary-fixed": "#0f0069",
+                      "primary": "#c3c0ff",
+                      "on-background": "#dae2fd",
+                      "text-secondary": "#94A3B8"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "unit": "4px",
+                      "sidebar-width": "260px",
+                      "gutter": "16px",
+                      "margin-desktop": "24px",
+                      "max-content-width": "1200px",
+                      "context-panel-width": "320px"
+              },
+              "fontFamily": {
+                      "label-caps": ["JetBrains Mono"],
+                      "headline-md": ["Hanken Grotesk"],
+                      "body-sm": ["Hanken Grotesk"],
+                      "headline-sm": ["Hanken Grotesk"],
+                      "headline-lg": ["Hanken Grotesk"],
+                      "body-md": ["Hanken Grotesk"],
+                      "code-sm": ["JetBrains Mono"],
+                      "body-lg": ["Hanken Grotesk"]
+              },
+              "fontSize": {
+                      "label-caps": ["11px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                      "body-sm": ["13px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                      "headline-sm": ["18px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                      "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                      "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                      "code-sm": ["12px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                      "body-lg": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}]
+              }
+            },
+          },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background font-body-md text-body-md overflow-hidden h-screen flex">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full w-sidebar-width bg-surface-container border-r border-border-subtle flex flex-col py-margin-desktop z-50">
+<div class="px-6 mb-8">
+<h1 class="font-headline-sm text-headline-sm font-bold text-text-primary uppercase tracking-wider">RAG Workspace</h1>
+<p class="font-label-caps text-label-caps text-accent-teal mt-1">Enterprise Terminal</p>
+</div>
+<nav class="flex-1 space-y-1 px-4">
+<div class="flex items-center px-3 py-2 text-text-secondary hover:text-text-primary hover:bg-surface-variant transition-colors duration-150 cursor-pointer rounded-lg group">
+<span class="material-symbols-outlined mr-3">add_comment</span>
+<span class="font-body-md text-body-md">New Chat</span>
+</div>
+<div class="flex items-center px-3 py-2 text-text-secondary hover:text-text-primary hover:bg-surface-variant transition-colors duration-150 cursor-pointer rounded-lg group">
+<span class="material-symbols-outlined mr-3">chat</span>
+<span class="font-body-md text-body-md">Conversations</span>
+</div>
+<div class="flex items-center px-3 py-2 bg-surface-secondary text-primary border-l-2 border-primary transition-colors duration-150 cursor-pointer rounded-r-lg group">
+<span class="material-symbols-outlined mr-3">description</span>
+<span class="font-body-md text-body-md">Documents</span>
+</div>
+<div class="flex items-center px-3 py-2 text-text-secondary hover:text-text-primary hover:bg-surface-variant transition-colors duration-150 cursor-pointer rounded-lg group">
+<span class="material-symbols-outlined mr-3">folder_shared</span>
+<span class="font-body-md text-body-md">Collections</span>
+</div>
+<div class="flex items-center px-3 py-2 text-text-secondary hover:text-text-primary hover:bg-surface-variant transition-colors duration-150 cursor-pointer rounded-lg group">
+<span class="material-symbols-outlined mr-3">smart_toy</span>
+<span class="font-body-md text-body-md">Agents</span>
+</div>
+<div class="flex items-center px-3 py-2 text-text-secondary hover:text-text-primary hover:bg-surface-variant transition-colors duration-150 cursor-pointer rounded-lg group">
+<span class="material-symbols-outlined mr-3">analytics</span>
+<span class="font-body-md text-body-md">Diagnostics</span>
+</div>
+<div class="flex items-center px-3 py-2 text-text-secondary hover:text-text-primary hover:bg-surface-variant transition-colors duration-150 cursor-pointer rounded-lg group">
+<span class="material-symbols-outlined mr-3">settings</span>
+<span class="font-body-md text-body-md">Settings</span>
+</div>
+</nav>
+<div class="px-6 mt-auto">
+<div class="flex items-center gap-3 pt-6 border-t border-border-subtle">
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-bold text-xs">JD</div>
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm text-text-primary font-semibold">Scientist 041</span>
+<span class="font-label-caps text-label-caps text-text-secondary">System Admin</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Workspace -->
+<main class="ml-[260px] flex-1 flex flex-col h-full bg-background relative overflow-y-auto">
+<!-- TopNavBar -->
+<header class="sticky top-0 w-full h-16 bg-background/80 backdrop-blur-md border-b border-border-subtle flex justify-between items-center px-margin-desktop z-40">
+<div class="flex items-center gap-4">
+<h2 class="font-headline-sm text-headline-sm font-semibold text-text-primary">Scientific RAG Terminal</h2>
+<div class="h-4 w-[1px] bg-border-subtle"></div>
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-status-success animate-pulse"></span>
+<span class="font-label-caps text-label-caps text-text-secondary uppercase">System Ready</span>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-text-secondary hover:text-accent-teal cursor-pointer transition-all duration-150">memory</span>
+<span class="material-symbols-outlined text-text-secondary hover:text-accent-teal cursor-pointer transition-all duration-150">database</span>
+<span class="material-symbols-outlined text-text-secondary hover:text-accent-teal cursor-pointer transition-all duration-150">account_circle</span>
+</div>
+</div>
+</header>
+<!-- Content Area -->
+<div class="flex-1 max-w-[1200px] mx-auto w-full p-margin-desktop space-y-8">
+<!-- Hero Title & Status -->
+<section class="flex flex-col gap-2">
+<h3 class="font-headline-lg text-headline-lg text-text-primary tracking-tight">Carga e Indexación de Documentos</h3>
+<p class="text-text-secondary max-w-2xl">Upload technical documentation for vectorization. All background jobs are asynchronously managed by the Go-Core indexing service.</p>
+</section>
+<!-- Grid Layout for Upload and Config -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+<!-- Left Side: Ingestion and Queue -->
+<div class="lg:col-span-2 space-y-6">
+<!-- Upload Area -->
+<div class="border-2 border-dashed border-border-subtle bg-surface-container-low rounded-xl p-12 flex flex-col items-center justify-center transition-all hover:bg-surface-container-high hover:border-primary group cursor-pointer relative overflow-hidden" id="dropzone">
+<div class="absolute inset-0 shimmer opacity-50 pointer-events-none"></div>
+<span class="material-symbols-outlined text-5xl text-text-secondary group-hover:text-primary mb-4 transition-colors">cloud_upload</span>
+<h4 class="font-headline-sm text-headline-sm text-text-primary mb-2">Drag &amp; drop research documents</h4>
+<p class="text-text-secondary font-body-sm text-body-sm">Supported formats: PDF, DOCX, TXT, MD (Max 50MB per file)</p>
+<button class="mt-6 px-6 py-2 bg-primary-container text-on-primary-container rounded-lg font-semibold hover:bg-opacity-90 transition-all">Browse Files</button>
+</div>
+<!-- Processing Queue -->
+<div class="bg-surface-container rounded-xl border border-border-subtle p-6">
+<div class="flex items-center justify-between mb-6">
+<h5 class="font-headline-sm text-headline-sm text-text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-accent-teal">sync</span>
+                            Active Processing Queue
+                        </h5>
+<div class="flex items-center gap-4">
+<span class="font-label-caps text-label-caps text-text-secondary">3 FILES IN FLIGHT</span>
+<div class="flex gap-2">
+<button class="p-1 hover:text-primary transition-colors"><span class="material-symbols-outlined text-sm">pause_circle</span></button>
+<button class="p-1 hover:text-status-error transition-colors"><span class="material-symbols-outlined text-sm">cancel</span></button>
+</div>
+</div>
+</div>
+<div class="space-y-6">
+<!-- Job 1 -->
+<div class="p-4 bg-surface-secondary border border-border-subtle rounded-lg space-y-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">article</span>
+<div>
+<p class="text-text-primary font-semibold">quantum_computing_foundations_2024.pdf</p>
+<div class="flex items-center gap-2 mt-1">
+<p class="font-label-caps text-[10px] text-text-secondary">JOB ID: 9f8a-2c4d-11eb</p>
+<span class="w-1 h-1 rounded-full bg-border-subtle"></span>
+<span class="text-status-success font-label-caps text-[10px] uppercase">Metadata Validated</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<span class="text-accent-teal font-label-caps text-label-caps">STAGES: 2/3 COMPLETE</span>
+<div class="flex items-center gap-1 border-l border-border-subtle pl-4">
+<button class="text-text-secondary hover:text-primary transition-colors" title="Pause"><span class="material-symbols-outlined text-lg">pause</span></button>
+<button class="text-text-secondary hover:text-status-error transition-colors" title="Cancel"><span class="material-symbols-outlined text-lg">close</span></button>
+<button class="text-text-secondary hover:text-accent-teal transition-colors" title="Retry"><span class="material-symbols-outlined text-lg">refresh</span></button>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-4">
+<div class="space-y-1">
+<div class="flex justify-between font-label-caps text-[9px] text-text-secondary">
+<span>PARSING</span>
+<span class="text-status-success">100%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-lowest rounded-full overflow-hidden">
+<div class="h-full bg-status-success w-full"></div>
+</div>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between font-label-caps text-[9px] text-text-secondary">
+<span>EMBEDDING</span>
+<span class="text-status-success">100%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-lowest rounded-full overflow-hidden">
+<div class="h-full bg-status-success w-full"></div>
+</div>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between font-label-caps text-[9px] text-text-secondary">
+<span>INDEXING STATUS</span>
+<span class="text-primary-container animate-pulse">65%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-lowest rounded-full overflow-hidden">
+<div class="h-full bg-primary-container w-[65%]"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Job 2 -->
+<div class="p-4 bg-surface-secondary border border-border-subtle rounded-lg space-y-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">description</span>
+<div>
+<p class="text-text-primary font-semibold">molecular_biology_datasets.csv</p>
+<div class="flex items-center gap-2 mt-1">
+<p class="font-label-caps text-[10px] text-text-secondary">JOB ID: a1b2-c3d4-e5f6</p>
+<span class="w-1 h-1 rounded-full bg-border-subtle"></span>
+<span class="text-status-success font-label-caps text-[10px] uppercase">Encoding Verified</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<span class="text-accent-teal font-label-caps text-label-caps">STAGES: 1/3 COMPLETE</span>
+<div class="flex items-center gap-1 border-l border-border-subtle pl-4">
+<button class="text-text-secondary hover:text-primary transition-colors" title="Pause"><span class="material-symbols-outlined text-lg">pause</span></button>
+<button class="text-text-secondary hover:text-status-error transition-colors" title="Cancel"><span class="material-symbols-outlined text-lg">close</span></button>
+<button class="text-text-secondary hover:text-accent-teal transition-colors" title="Retry"><span class="material-symbols-outlined text-lg">refresh</span></button>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-4">
+<div class="space-y-1">
+<div class="flex justify-between font-label-caps text-[9px] text-text-secondary">
+<span>PARSING</span>
+<span class="text-status-success">100%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-lowest rounded-full overflow-hidden">
+<div class="h-full bg-status-success w-full"></div>
+</div>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between font-label-caps text-[9px] text-text-secondary">
+<span>EMBEDDING</span>
+<span class="text-primary-container animate-pulse">22%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-lowest rounded-full overflow-hidden">
+<div class="h-full bg-primary-container w-[22%]"></div>
+</div>
+</div>
+<div class="space-y-1 opacity-50">
+<div class="flex justify-between font-label-caps text-[9px] text-text-secondary">
+<span>INDEXING STATUS</span>
+<span>0%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-lowest rounded-full overflow-hidden">
+<div class="h-full bg-border-subtle w-0"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Side: Configuration Sidebar -->
+<div class="space-y-6">
+<div class="bg-surface-container rounded-xl border border-border-subtle p-6 flex flex-col gap-5 sticky top-20">
+<h5 class="font-headline-sm text-headline-sm text-text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">tune</span>
+                        Index Configuration
+                    </h5>
+<!-- Target Collection -->
+<div class="space-y-2">
+<label class="font-label-caps text-label-caps text-text-secondary">Target Collection</label>
+<div class="relative group">
+<select class="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-text-primary appearance-none focus:ring-1 focus:ring-primary focus:outline-none transition-all cursor-pointer text-sm">
+<option>Neuroscience Research</option>
+<option>Quantum Mechanics Base</option>
+<option>Internal HR Documentation</option>
+<option>New Collection...</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary group-hover:text-primary transition-colors">expand_more</span>
+</div>
+</div>
+<!-- Embedding Model -->
+<div class="space-y-2">
+<label class="font-label-caps text-label-caps text-text-secondary">Embedding Model</label>
+<div class="relative group">
+<select class="w-full bg-surface-secondary border border-border-subtle rounded-lg px-4 py-2.5 text-text-primary appearance-none focus:ring-1 focus:ring-primary focus:outline-none transition-all cursor-pointer text-sm">
+<option>text-embedding-3-large (OpenAI)</option>
+<option>e5-large-v2 (HuggingFace)</option>
+<option>titan-embed-text-v1 (AWS)</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary group-hover:text-primary transition-colors">psychology</span>
+</div>
+</div>
+<!-- Chunking Strategy -->
+<div class="space-y-3 pt-2 border-t border-border-subtle">
+<div class="flex items-center justify-between">
+<label class="font-label-caps text-label-caps text-text-secondary">Chunking Strategy</label>
+<div class="flex items-center gap-1.5 cursor-pointer group">
+<span class="font-label-caps text-[10px] text-text-secondary group-hover:text-primary">Advanced</span>
+<div class="w-6 h-3 bg-surface-secondary border border-border-subtle rounded-full relative transition-colors group-hover:border-primary">
+<div class="absolute left-0.5 top-0.5 w-1.5 h-1.5 bg-text-secondary rounded-full"></div>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 gap-2">
+<label class="flex items-center p-2.5 rounded-lg border border-border-subtle bg-surface-secondary cursor-pointer hover:border-primary transition-all group">
+<input checked="" class="hidden" name="chunking" type="radio"/>
+<span class="w-3 h-3 rounded-full border border-border-subtle flex items-center justify-center mr-3 group-hover:border-primary">
+<span class="w-1.5 h-1.5 rounded-full bg-primary scale-100 transition-transform"></span>
+</span>
+<div class="flex-1">
+<p class="text-text-primary text-sm font-semibold">Recursive</p>
+<p class="text-[10px] text-text-secondary">Optimized for hierarchical docs</p>
+</div>
+</label>
+<label class="flex items-center p-2.5 rounded-lg border border-border-subtle bg-surface-container-low cursor-pointer hover:border-primary transition-all group">
+<input class="hidden" name="chunking" type="radio"/>
+<span class="w-3 h-3 rounded-full border border-border-subtle flex items-center justify-center mr-3 group-hover:border-primary">
+<span class="w-1.5 h-1.5 rounded-full bg-primary scale-0 transition-transform"></span>
+</span>
+<div class="flex-1">
+<p class="text-text-primary text-sm font-semibold">Semantic</p>
+<p class="text-[10px] text-text-secondary">Context-aware break points</p>
+</div>
+</label>
+</div>
+<!-- Technical Depth Controls -->
+<div class="space-y-4 mt-2 p-3 bg-surface-container-lowest rounded-lg border border-border-subtle">
+<div class="space-y-2">
+<div class="flex justify-between font-label-caps text-[10px] text-text-secondary">
+<span>Chunk Size</span>
+<span class="text-primary font-bold">512 Tokens</span>
+</div>
+<input class="w-full h-1 bg-surface-secondary rounded-lg appearance-none cursor-pointer accent-primary" max="2048" min="128" type="range" value="512"/>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between font-label-caps text-[10px] text-text-secondary">
+<span>Overlap</span>
+<span class="text-primary font-bold">50 Tokens</span>
+</div>
+<input class="w-full h-1 bg-surface-secondary rounded-lg appearance-none cursor-pointer accent-primary" max="256" min="0" type="range" value="50"/>
+</div>
+</div>
+</div>
+<!-- Post-Processing Section -->
+<div class="space-y-3 pt-2 border-t border-border-subtle">
+<label class="font-label-caps text-label-caps text-text-secondary">Post-Processing</label>
+<div class="space-y-2">
+<label class="flex items-center gap-3 cursor-pointer group">
+<input checked="" class="w-3.5 h-3.5 rounded border-border-subtle bg-surface-secondary text-primary-container focus:ring-0 focus:ring-offset-0" type="checkbox"/>
+<span class="text-sm text-text-primary group-hover:text-primary transition-colors">Auto-tagging &amp; Classification</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="w-3.5 h-3.5 rounded border-border-subtle bg-surface-secondary text-primary-container focus:ring-0 focus:ring-offset-0" type="checkbox"/>
+<span class="text-sm text-text-primary group-hover:text-primary transition-colors">Manual Language Override</span>
+</label>
+<div class="flex flex-col gap-1.5 pt-1">
+<span class="font-label-caps text-[10px] text-text-secondary">Target Index Namespace</span>
+<input class="w-full bg-surface-secondary border border-border-subtle rounded-lg px-3 py-2 text-xs text-text-primary focus:ring-1 focus:ring-primary focus:outline-none" placeholder="e.g. production-v1" type="text"/>
+</div>
+</div>
+</div>
+<div class="pt-4 mt-2">
+<button class="w-full bg-primary-container text-on-primary-container font-bold py-3.5 rounded-xl hover:bg-opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined">rocket_launch</span>
+                            Start Indexing Job
+                        </button>
+<p class="text-center font-label-caps text-[10px] text-text-secondary mt-3">WORKER STATUS: 4 ACTIVE NODES</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Dashboard Analytics Bottom Section -->
+<section class="grid grid-cols-1 md:grid-cols-4 gap-4 pb-12">
+<div class="bg-surface-container border border-border-subtle p-4 rounded-lg">
+<p class="font-label-caps text-label-caps text-text-secondary">Uptime</p>
+<p class="font-headline-sm text-headline-sm text-status-success mt-1">99.998%</p>
+</div>
+<div class="bg-surface-container border border-border-subtle p-4 rounded-lg">
+<p class="font-label-caps text-label-caps text-text-secondary">Embedding Latency</p>
+<p class="font-headline-sm text-headline-sm text-text-primary mt-1">42ms</p>
+</div>
+<div class="bg-surface-container border border-border-subtle p-4 rounded-lg">
+<p class="font-label-caps text-label-caps text-text-secondary">Vector Count</p>
+<p class="font-headline-sm text-headline-sm text-text-primary mt-1">1,240,052</p>
+</div>
+<div class="bg-surface-container border border-border-subtle p-4 rounded-lg">
+<p class="font-label-caps text-label-caps text-text-secondary">Cluster Memory</p>
+<p class="font-headline-sm text-headline-sm text-accent-indigo mt-1">64.2GB / 128GB</p>
+</div>
+</section>
+</div>
+</main>
+<!-- Background Elements -->
+<div class="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
+<div class="absolute top-[-10%] right-[-5%] w-[40%] h-[40%] bg-primary-container/10 blur-[120px] rounded-full"></div>
+<div class="absolute bottom-[-10%] left-[-5%] w-[30%] h-[30%] bg-accent-teal/10 blur-[100px] rounded-full"></div>
+</div>
+<script>
+    // Micro-interactions
+    const dropzone = document.getElementById('dropzone');
+    
+    dropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropzone.classList.add('border-primary', 'bg-surface-container-high');
+    });
+
+    dropzone.addEventListener('dragleave', () => {
+        dropzone.classList.remove('border-primary', 'bg-surface-container-high');
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('border-primary', 'bg-surface-container-high');
+        console.log('Files dropped');
+    });
+
+    // Simulating background progress
+    let indexingProgress = 65;
+    let embeddingProgress = 22;
+
+    setInterval(() => {
+        if(indexingProgress < 100) {
+            indexingProgress += Math.random() * 0.5;
+            const bar = document.querySelector('.bg-primary-container.w-\\[65\\%\\]');
+            if(bar) {
+                bar.style.width = `${indexingProgress}%`;
+                bar.parentElement.previousElementSibling.querySelector('.text-primary-container').innerText = `${Math.floor(indexingProgress)}%`;
+            }
+        }
+        if(embeddingProgress < 100) {
+            embeddingProgress += Math.random() * 0.8;
+            const bar = document.querySelector('.bg-primary-container.w-\\[22\\%\\]');
+            if(bar) {
+                bar.style.width = `${embeddingProgress}%`;
+                bar.parentElement.previousElementSibling.querySelector('.text-primary-container').innerText = `${Math.floor(embeddingProgress)}%`;
+            }
+        }
+    }, 500);
+
+    // Radio toggle UI update
+    const radioInputs = document.querySelectorAll('input[name="chunking"]');
+    radioInputs.forEach(input => {
+        input.addEventListener('change', () => {
+            radioInputs.forEach(i => {
+                const dot = i.parentElement.querySelector('.bg-primary');
+                const parent = i.parentElement;
+                if(i.checked) {
+                    dot.classList.remove('scale-0');
+                    dot.classList.add('scale-100');
+                    parent.classList.add('bg-surface-secondary');
+                    parent.classList.remove('bg-surface-container-low');
+                } else {
+                    dot.classList.add('scale-0');
+                    dot.classList.remove('scale-100');
+                    parent.classList.remove('bg-surface-secondary');
+                    parent.classList.add('bg-surface-container-low');
+                }
+            });
+        });
+    });
+</script>
+</body></html>

@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Scientific RAG | Agent Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600&amp;family=JetBrains+Mono:wght@400;600&amp;family=Be+Vietnam+Pro:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary-container": "#00302b",
+                    "on-surface": "#dae2fd",
+                    "secondary-fixed-dim": "#6bd8cb",
+                    "surface-container-highest": "#2d3449",
+                    "primary": "#c3c0ff",
+                    "on-secondary-fixed-variant": "#005049",
+                    "background-principal": "#0F172A",
+                    "secondary": "#6bd8cb",
+                    "tertiary-fixed-dim": "#bcc7de",
+                    "on-tertiary-fixed": "#111c2d",
+                    "on-background": "#dae2fd",
+                    "accent-teal": "#14B8A6",
+                    "outline-variant": "#464555",
+                    "surface-container-high": "#222a3d",
+                    "border-subtle": "#334155",
+                    "surface": "#0b1326",
+                    "on-tertiary": "#263143",
+                    "on-error": "#690005",
+                    "on-surface-variant": "#c7c4d8",
+                    "surface-container-lowest": "#060e20",
+                    "background": "#0b1326",
+                    "accent-indigo": "#6366F1",
+                    "error": "#ffb4ab",
+                    "on-primary": "#1d00a5",
+                    "inverse-surface": "#dae2fd",
+                    "status-success": "#22C55E",
+                    "surface-tint": "#c3c0ff",
+                    "surface-dim": "#0b1326",
+                    "tertiary-container": "#566175",
+                    "inverse-primary": "#4d44e3",
+                    "on-secondary-fixed": "#00201d",
+                    "on-tertiary-container": "#d1dcf4",
+                    "inverse-on-surface": "#283044",
+                    "surface-secondary": "#1E293B",
+                    "outline": "#918fa1",
+                    "surface-variant": "#2d3449",
+                    "tertiary-fixed": "#d8e3fb",
+                    "on-error-container": "#ffdad6",
+                    "primary-fixed-dim": "#c3c0ff",
+                    "status-warning": "#F59E0B",
+                    "on-primary-container": "#dad7ff",
+                    "tertiary": "#bcc7de",
+                    "status-error": "#EF4444",
+                    "on-secondary": "#003732",
+                    "surface-bright": "#31394d",
+                    "error-container": "#93000a",
+                    "primary-container": "#4f46e5",
+                    "primary-fixed": "#e2dfff",
+                    "surface-container-low": "#131b2e",
+                    "secondary-fixed": "#89f5e7",
+                    "on-tertiary-fixed-variant": "#3c475a",
+                    "on-primary-fixed-variant": "#3323cc",
+                    "surface-container": "#171f33",
+                    "on-primary-fixed": "#0f0069",
+                    "text-primary": "#F8FAFC",
+                    "text-secondary": "#94A3B8",
+                    "secondary-container": "#29a195"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "context-panel-width": "320px",
+                    "max-content-width": "1200px",
+                    "sidebar-width": "260px",
+                    "unit": "4px",
+                    "gutter": "16px",
+                    "margin-desktop": "24px"
+            },
+            "fontFamily": {
+                    "headline-lg": ["Hanken Grotesk"],
+                    "headline-sm": ["Hanken Grotesk"],
+                    "label-caps": ["JetBrains Mono"],
+                    "body-sm": ["Hanken Grotesk"],
+                    "code-sm": ["JetBrains Mono"],
+                    "headline-md": ["Hanken Grotesk"],
+                    "body-md": ["Hanken Grotesk"],
+                    "body-lg": ["Hanken Grotesk"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            font-family: 'Be Vietnam Pro', sans-serif;
+            background-color: #0b1326;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .agent-card:hover {
+            border-color: #4f46e5;
+            box-shadow: 0 0 15px rgba(79, 70, 229, 0.2);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #131b2e;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #2d3449;
+            border-radius: 10px;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #14B8A6;
+        }
+        .toggle-checkbox:checked + .toggle-label:after {
+            left: calc(100% - 2px);
+            transform: translateX(-100%);
+        }
+        .toggle-label:after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 12px;
+            height: 12px;
+            background: white;
+            border-radius: 90px;
+            transition: 0.3s;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface overflow-hidden">
+<div class="flex h-screen w-full">
+<!-- Sidebar Navigation (Shared Component Logic) -->
+<aside class="w-[sidebar-width] h-full flex flex-col bg-[#131221] border-r border-outline-variant/30 shrink-0">
+<div class="p-6 flex flex-col gap-8">
+<!-- Branding -->
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-full overflow-hidden" data-alt="A stylized logo icon representing a neural network in a deep indigo and ultraviolet color scheme. The design is geometric and minimalist, set against a dark, technical background consistent with a high-end scientific research terminal. The lighting is low-key with subtle neon accents." style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBpliOiO4B2oGR7O8PFYzF0DGNU6dM2_uADHi_D_-4092lP2DIdwol0Zr69KYXLg-bGJo6iI1lx3Sad5Kg2ryFxNCwZFEoxY4tt5yMgsY1JTCAAzGUT3bRqXBcaUzCcGRwaFwqDCzTw7_EjeqFCVG7ZMokBGtgeVJjWEtlT2D15S1o-dDThK6zwayfRULmwIKu5AE3ZWBO6qdMs9xffvug8L-VeHAG5kwr7NqvOcstc72VMU5ckSTTO3jmdirGemoOcZA4cISunhoI");'></div>
+<div class="flex flex-col">
+<h1 class="text-white text-base font-medium leading-tight">Scientific RAG</h1>
+<p class="text-[#9795c6] text-[10px] font-label-caps uppercase tracking-wider">Terminal v1.0.4</p>
+</div>
+</div>
+<!-- Navigation Links -->
+<nav class="flex flex-col gap-2">
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+<span class="text-sm font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded bg-surface-container-highest text-white transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">smart_toy</span>
+<span class="text-sm font-medium">Agents</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">database</span>
+<span class="text-sm font-medium">Knowledge Base</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">memory</span>
+<span class="text-sm font-medium">Inference</span>
+</a>
+<div class="h-px bg-outline-variant/20 my-2"></div>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span class="text-sm font-medium">Settings</span>
+</a>
+</nav>
+</div>
+<!-- System Stats (Extra for Technical Theme) -->
+<div class="mt-auto p-6 flex flex-col gap-4">
+<div class="flex flex-col gap-1">
+<div class="flex justify-between text-[10px] font-label-caps text-[#9795c6]">
+<span>CORE UTILIZATION</span>
+<span>42%</span>
+</div>
+<div class="w-full h-1 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-accent-teal w-[42%]"></div>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex justify-between text-[10px] font-label-caps text-[#9795c6]">
+<span>LATENCY</span>
+<span>142ms</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col min-w-0 bg-surface-dim relative">
+<!-- Global Header -->
+<header class="flex items-center justify-between border-b border-outline-variant/20 px-8 py-4 bg-surface/50 backdrop-blur-md sticky top-0 z-10">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-3">
+<div class="size-8 bg-primary-container flex items-center justify-center rounded">
+<span class="material-symbols-outlined text-white text-[20px]">precision_manufacturing</span>
+</div>
+<h2 class="text-text-primary text-xl font-headline-md">Agent Management</h2>
+</div>
+<!-- Search Bar -->
+<div class="relative w-64">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-lg pl-10 pr-4 py-2 text-sm text-text-primary placeholder:text-text-secondary focus:ring-1 focus:ring-primary" placeholder="Search agents..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex -space-x-2">
+<div class="size-8 rounded-full border-2 border-surface bg-cover bg-center" data-alt="A professional portrait of a senior AI researcher, diverse background, studio lighting, corporate attire, with a soft-focus laboratory background in tones of deep blue and charcoal gray. The style is crisp, high-definition, and evokes a sense of expertise and technical leadership." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuA4jck7eGAAJo4p1EPal-DwJhUie94OZWHrvP_aF868ZuzubV5r0_asFDGAUHJDCZIp_xkMJWsdDyktvDxnRm988LFv1q06e1BPp4KAQ8LhSkwoCrwfgtlvx-ZvTgSRbwJkQctApgYRmh2rkyqIJOQG_PvRwLr9LYdS8XDiZsV3nCzz-i4T6QmOL7QkRtXhFX5whXkFRjvifsjshkFjAU0SuC0vEOumV7BoSdYXCLptls3RSVlx58_MQPNaLCxSz9p6ebObFsNA5rg')"></div>
+<div class="size-8 rounded-full border-2 border-surface bg-surface-container-highest flex items-center justify-center text-[10px] text-text-secondary">+3</div>
+</div>
+<button class="bg-primary-container hover:bg-inverse-primary text-white px-5 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                        Create New Agent
+                    </button>
+<button class="size-10 bg-surface-container-high rounded-lg flex items-center justify-center text-text-secondary hover:text-white transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</div>
+</header>
+<!-- Filters & Tabs -->
+<div class="px-8 py-4 flex flex-col gap-4 bg-surface-container-lowest/30">
+<div class="flex items-center gap-3 overflow-x-auto pb-1 custom-scrollbar">
+<div class="text-xs font-label-caps text-text-secondary uppercase mr-2 tracking-widest">Specialties:</div>
+<button class="px-4 py-1.5 rounded-full bg-primary-container text-white text-xs font-medium border border-primary/20">All Specialties</button>
+<button class="px-4 py-1.5 rounded-full bg-surface-container-high text-text-secondary hover:text-white text-xs font-medium transition-colors border border-outline-variant/30">Deep Research</button>
+<button class="px-4 py-1.5 rounded-full bg-surface-container-high text-text-secondary hover:text-white text-xs font-medium transition-colors border border-outline-variant/30">Data Extraction</button>
+<button class="px-4 py-1.5 rounded-full bg-surface-container-high text-text-secondary hover:text-white text-xs font-medium transition-colors border border-outline-variant/30">Semantic Synthesis</button>
+<button class="px-4 py-1.5 rounded-full bg-surface-container-high text-text-secondary hover:text-white text-xs font-medium transition-colors border border-outline-variant/30">Code Analysis</button>
+<button class="px-4 py-1.5 rounded-full bg-surface-container-high text-text-secondary hover:text-white text-xs font-medium transition-colors border border-outline-variant/30">Technical Writing</button>
+</div>
+<div class="flex items-center gap-3 overflow-x-auto pb-1 custom-scrollbar">
+<div class="text-xs font-label-caps text-text-secondary uppercase mr-2 tracking-widest">Models:</div>
+<button class="px-3 py-1 rounded border border-outline-variant/30 text-text-secondary hover:border-primary text-[11px] font-label-caps transition-colors">GPT-4o</button>
+<button class="px-3 py-1 rounded border border-outline-variant/30 text-text-secondary hover:border-primary text-[11px] font-label-caps transition-colors">Llama 3 70B</button>
+<button class="px-3 py-1 rounded border border-outline-variant/30 text-text-secondary hover:border-primary text-[11px] font-label-caps transition-colors">Claude 3.5 Sonnet</button>
+<button class="px-3 py-1 rounded border border-outline-variant/30 text-text-secondary hover:border-primary text-[11px] font-label-caps transition-colors">Mistral Large</button>
+<button class="px-3 py-1 rounded border border-outline-variant/30 text-text-secondary hover:border-primary text-[11px] font-label-caps transition-colors">Custom Fine-tune</button>
+</div>
+</div>
+<!-- Main Scrollable Grid Content -->
+<div class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+<!-- Agent Card 1 -->
+<div class="agent-card bg-surface-container-low border border-outline-variant/20 rounded-xl p-5 flex flex-col gap-4 transition-all duration-300">
+<div class="flex justify-between items-start">
+<div class="size-12 rounded-lg bg-surface-container-high flex items-center justify-center overflow-hidden">
+<div class="w-full h-full bg-cover bg-center" data-alt="A futuristic AI agent icon featuring a stylized anatomical brain with fiber-optic neural pathways in electric blue and silver. The design is isometric, set against a dark carbon-fiber textured background, reflecting a high-end technological tool for research and deep analysis." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCFUUv81pA7SNr4Q5-A7MPwkrouOUqPYKW_YKTyVIUSWnT8TZJKkrTbf-spvSYmodoJBfSM4OLJaiVtbFr0_UWJi5bWNgsaCNwtWcOqyW0mA8QOXewI4ULPXH4LZycm-4Uae589MiUgurClBRhcCB9AItylzq8ubnTrNt9CTkH2gi0MrVbncG8XUCXFpZiLD2lad4E_J2pG3OQ-_SenGf6YuieejLhIgkX7Cm4mD385kHrCSw8z78gZ4REgpR9HMvp0RqLTztfZhZ0')"></div>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-[10px] font-label-caps text-status-success bg-status-success/10 px-2 py-0.5 rounded">ONLINE</span>
+<div class="relative inline-block w-8 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="toggle-checkbox absolute block w-0 h-0 opacity-0" id="toggle1" name="toggle1" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-4 rounded-full bg-surface-container-highest cursor-pointer transition-colors relative" for="toggle1"></label>
+</div>
+</div>
+</div>
+<div>
+<h3 class="text-text-primary font-headline-sm">Research Analyst</h3>
+<p class="text-text-secondary text-body-sm mt-1 line-clamp-2">Performs exhaustive cross-domain academic searches and synthesizes peer-reviewed findings into structured reports.</p>
+</div>
+<div class="mt-auto flex flex-col gap-3">
+<div class="flex items-center justify-between text-xs">
+<span class="text-text-secondary">Model</span>
+<span class="text-primary font-code-sm">Llama 3 70B</span>
+</div>
+<div class="flex items-center justify-between text-xs">
+<span class="text-text-secondary">Last Active</span>
+<span class="text-on-surface">2 mins ago</span>
+</div>
+<button class="w-full py-2 bg-surface-container-high hover:bg-surface-container-highest rounded text-sm text-text-primary transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">settings</span>
+                                Configure Agent
+                            </button>
+</div>
+</div>
+<!-- Agent Card 2 -->
+<div class="agent-card bg-surface-container-low border border-outline-variant/20 rounded-xl p-5 flex flex-col gap-4 transition-all duration-300">
+<div class="flex justify-between items-start">
+<div class="size-12 rounded-lg bg-surface-container-high flex items-center justify-center overflow-hidden">
+<div class="w-full h-full bg-cover bg-center" data-alt="An abstract icon of a high-speed data stream or prism, refracting white light into spectrums of teal and indigo. The style is minimalist and sharp, representing a data mining and extraction engine in a dark-mode scientific dashboard environment." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuA7FCEbyEfK-gayy1aCyBng562EPIKTyQD85SBQr4UuH1QxKnPyEA8HLot9DIbJadI29qZh8--62IWg1U1rvGFKGlC69WVY9e09kYsDWhXrqBiFYQwdeZVn8VgQYgNsM7okx-Ze-VXzNF-FhVOqliEEnWxTTnp0qbF8Mm4Rerk4zDN62a3oZyaoKUVwFqYDPnOdWvCFjYlung5_MMGvWCwd1ngLkYRsPwxRDPgV7AGCTykBApixsA6O6SyCLvJNDtaSZ-ddW4CoSQU')"></div>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-[10px] font-label-caps text-text-secondary bg-surface-container-highest px-2 py-0.5 rounded">IDLE</span>
+<div class="relative inline-block w-8 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="toggle-checkbox absolute block w-0 h-0 opacity-0" id="toggle2" name="toggle2" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-4 rounded-full bg-surface-container-highest cursor-pointer transition-colors relative" for="toggle2"></label>
+</div>
+</div>
+</div>
+<div>
+<h3 class="text-text-primary font-headline-sm">Data Miner</h3>
+<p class="text-text-secondary text-body-sm mt-1 line-clamp-2">High-throughput scraping and cleaning of unstructured data from PDF, CSV, and legacy databases.</p>
+</div>
+<div class="mt-auto flex flex-col gap-3">
+<div class="flex items-center justify-between text-xs">
+<span class="text-text-secondary">Model</span>
+<span class="text-primary font-code-sm">Mistral Large</span>
+</div>
+<div class="flex items-center justify-between text-xs">
+<span class="text-text-secondary">Last Active</span>
+<span class="text-on-surface">1 hour ago</span>
+</div>
+<button class="w-full py-2 bg-surface-container-high hover:bg-surface-container-highest rounded text-sm text-text-primary transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">settings</span>
+                                Configure Agent
+                            </button>
+</div>
+</div>
+<!-- Agent Card 3 -->
+<div class="agent-card bg-surface-container-low border border-outline-variant/20 rounded-xl p-5 flex flex-col gap-4 transition-all duration-300">
+<div class="flex justify-between items-start">
+<div class="size-12 rounded-lg bg-surface-container-high flex items-center justify-center overflow-hidden">
+<div class="w-full h-full bg-cover bg-center" data-alt="A macro-photography style representation of a crystalline structure, with sharp facets catching purple and blue light. The image represents a high-density summarization engine, conveying complexity being refined into clarity, designed for a professional technical interface." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB4A7O0hjFYxH4DUnOJ32utOUqd6b2mlZllGlMtma9NRfzSzS7sbIDqFkuRbn3sxYaeqa2sGzZ5tjqWm8UbU5WmCs9si2Pi_hLdjRYtGRAGFd_VA3LmI3_BbatZxMbHBpRU1l59-ORdrdtvCerO2_VFMSenebVOAoPGo6vVNx2coyOO5bojlaYX5aC7qWsxLIN5zQykir0LkZ1bKkDoFYTmLwE9BCohhcX_I4gLi6xbQGL-QLYKxN7xhb0kxW_uLm2d-31dPk6wCNI')"></div>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-[10px] font-label-caps text-status-warning bg-status-warning/10 px-2 py-0.5 rounded">BUSY</span>
+<div class="relative inline-block w-8 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="toggle-checkbox absolute block w-0 h-0 opacity-0" id="toggle3" name="toggle3" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-4 rounded-full bg-surface-container-highest cursor-pointer transition-colors relative" for="toggle3"></label>
+</div>
+</div>
+</div>
+<div>
+<h3 class="text-text-primary font-headline-sm">Summary Engine</h3>
+<p class="text-text-secondary text-body-sm mt-1 line-clamp-2">Condenses multi-thousand page document sets into executive summaries with full citation mapping.</p>
+</div>
+<div class="mt-auto flex flex-col gap-3">
+<div class="flex items-center justify-between text-xs">
+<span class="text-text-secondary">Model</span>
+<span class="text-primary font-code-sm">GPT-4o</span>
+</div>
+<div class="flex items-center justify-between text-xs">
+<span class="text-text-secondary">Current Task</span>
+<span class="text-on-surface">Summarizing #DOC-442</span>
+</div>
+<button class="w-full py-2 bg-surface-container-high hover:bg-surface-container-highest rounded text-sm text-text-primary transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">settings</span>
+                                Configure Agent
+                            </button>
+</div>
+</div>
+<!-- Agent Card 4 -->
+<div class="agent-card bg-surface-container-low border border-outline-variant/20 rounded-xl p-5 flex flex-col gap-4 transition-all duration-300">
+<div class="flex justify-between items-start">
+<div class="size-12 rounded-lg bg-surface-container-high flex items-center justify-center overflow-hidden">
+<div class="w-full h-full bg-cover bg-center" data-alt="A minimalist logo for a code security analyzer, featuring a stylized shield integrated with terminal bracket symbols. The color palette uses deep navy and vivid neon green, with a clean, vector-based technical aesthetic suitable for a high-security AI application dashboard." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDMsD9OwpzFgUz-_DGlT3YVxSUysZaX3tcQqrlT-VVspOSEy9WsumRpcyFPqz67L0V9QVwO2hKyNuvgz8RfgES3_JK48QrkJw7O43zDYVRCB1yrXfbHesdiBgGn-k_FkEJFBMCc1M64NIPERtFz5Hp1Reguf6QN33igWN-joTegg-mOgeg__X5aJLCref8iFYRSdDBFqnQGMo3kURCfgjtIQTNZKtmtomuzkedwv81Qy9JVcXD2hYrz-tpGkmYthbL8vKi-qqo1cho')"></div>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-[10px] font-label-caps text-status-success bg-status-success/10 px-2 py-0.5 rounded">ONLINE</span>
+<div class="relative inline-block w-8 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="toggle-checkbox absolute block w-0 h-0 opacity-0" id="toggle4" name="toggle4" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-4 rounded-full bg-surface-container-highest cursor-pointer transition-colors relative" for="toggle4"></label>
+</div>
+</div>
+</div>
+<div>
+<h3 class="text-text-primary font-headline-sm">Code Reviewer</h3>
+<p class="text-text-secondary text-body-sm mt-1 line-clamp-2">Scans repository for vulnerabilities and logic errors using specialized RAG context for library documentation.</p>
+</div>
+<div class="mt-auto flex flex-col gap-3">
+<div class="flex items-center justify-between text-xs">
+<span class="text-text-secondary">Model</span>
+<span class="text-primary font-code-sm">Claude 3.5</span>
+</div>
+<div class="flex items-center justify-between text-xs">
+<span class="text-text-secondary">Last Active</span>
+<span class="text-on-surface">Just now</span>
+</div>
+<button class="w-full py-2 bg-surface-container-high hover:bg-surface-container-highest rounded text-sm text-text-primary transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">settings</span>
+                                Configure Agent
+                            </button>
+</div>
+</div>
+<!-- New Agent Placeholder -->
+<button class="border-2 border-dashed border-outline-variant/30 rounded-xl flex flex-col items-center justify-center gap-4 hover:border-primary/50 hover:bg-primary/5 transition-all group min-h-[320px]">
+<div class="size-14 rounded-full bg-surface-container-high flex items-center justify-center text-text-secondary group-hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[32px]">add</span>
+</div>
+<div class="text-center px-4">
+<p class="text-text-primary font-semibold">New Specialist</p>
+<p class="text-text-secondary text-xs mt-1">Design a custom behavior and select model</p>
+</div>
+</button>
+</div>
+</div>
+<!-- Background Atmosphere -->
+<div class="absolute bottom-0 right-0 w-1/2 h-1/2 pointer-events-none opacity-10">
+<webgl-shader class="w-full h-full" src="{{DATA:ANIMATION:ANIMATION_1}}"></webgl-shader>
+</div>
+</main>
+</div>
+<script>
+        // Micro-interactions and subtle state management
+        document.querySelectorAll('.agent-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                // Subtle lift or glow effect handled by CSS
+            });
+        });
+
+        // Search filtering simulation
+        const searchInput = document.querySelector('input[type="text"]');
+        searchInput.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            document.querySelectorAll('.agent-card').forEach(card => {
+                const name = card.querySelector('h3').textContent.toLowerCase();
+                const desc = card.querySelector('p').textContent.toLowerCase();
+                if (name.includes(term) || desc.includes(term)) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+
+        // Model filter interaction
+        const modelButtons = document.querySelectorAll('.px-3.py-1.rounded.border');
+        modelButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                modelButtons.forEach(b => {
+                    b.classList.remove('border-primary', 'text-primary');
+                    b.classList.add('border-outline-variant/30', 'text-text-secondary');
+                });
+                btn.classList.remove('border-outline-variant/30', 'text-text-secondary');
+                btn.classList.add('border-primary', 'text-primary');
+            });
+        });
+    </script>
+</body></html>

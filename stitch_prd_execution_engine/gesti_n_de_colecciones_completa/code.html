@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Collections Management | Scientific RAG Terminal</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;800&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-surface-variant": "#c7c4d8",
+                    "on-secondary": "#003732",
+                    "secondary-fixed": "#89f5e7",
+                    "on-tertiary-fixed-variant": "#3c475a",
+                    "tertiary-fixed-dim": "#bcc7de",
+                    "tertiary": "#bcc7de",
+                    "on-secondary-fixed": "#00201d",
+                    "inverse-primary": "#4d44e3",
+                    "text-primary": "#F8FAFC",
+                    "inverse-surface": "#dae2fd",
+                    "surface-container-low": "#131b2e",
+                    "status-warning": "#F59E0B",
+                    "surface-container-lowest": "#060e20",
+                    "on-primary-container": "#dad7ff",
+                    "accent-indigo": "#6366F1",
+                    "tertiary-container": "#566175",
+                    "secondary-fixed-dim": "#6bd8cb",
+                    "surface-container": "#171f33",
+                    "on-tertiary": "#263143",
+                    "inverse-on-surface": "#283044",
+                    "accent-teal": "#14B8A6",
+                    "on-error-container": "#ffdad6",
+                    "surface-secondary": "#1E293B",
+                    "surface": "#0b1326",
+                    "error": "#ffb4ab",
+                    "error-container": "#93000a",
+                    "on-tertiary-container": "#d1dcf4",
+                    "on-error": "#690005",
+                    "surface-tint": "#c3c0ff",
+                    "outline-variant": "#464555",
+                    "on-surface": "#dae2fd",
+                    "surface-bright": "#31394d",
+                    "status-success": "#22C55E",
+                    "surface-variant": "#2d3449",
+                    "secondary-container": "#29a195",
+                    "on-primary": "#1d00a5",
+                    "on-secondary-fixed-variant": "#005049",
+                    "border-subtle": "#334155",
+                    "surface-container-high": "#222a3d",
+                    "outline": "#918fa1",
+                    "on-secondary-container": "#00302b",
+                    "background": "#0b1326",
+                    "on-tertiary-fixed": "#111c2d",
+                    "primary-container": "#4f46e5",
+                    "surface-container-highest": "#2d3449",
+                    "secondary": "#6bd8cb",
+                    "status-error": "#EF4444",
+                    "tertiary-fixed": "#d8e3fb",
+                    "primary-fixed": "#e2dfff",
+                    "primary-fixed-dim": "#c3c0ff",
+                    "on-primary-fixed-variant": "#3323cc",
+                    "surface-dim": "#0b1326",
+                    "background-principal": "#0F172A",
+                    "on-primary-fixed": "#0f0069",
+                    "primary": "#c3c0ff",
+                    "on-background": "#dae2fd",
+                    "text-secondary": "#94A3B8"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "unit": "4px",
+                    "sidebar-width": "260px",
+                    "gutter": "16px",
+                    "margin-desktop": "24px",
+                    "max-content-width": "1200px",
+                    "context-panel-width": "320px"
+            },
+            "fontFamily": {
+                    "label-caps": ["JetBrains Mono"],
+                    "headline-md": ["Hanken Grotesk"],
+                    "body-sm": ["Hanken Grotesk"],
+                    "headline-sm": ["Hanken Grotesk"],
+                    "headline-lg": ["Hanken Grotesk"],
+                    "body-md": ["Hanken Grotesk"],
+                    "code-sm": ["JetBrains Mono"],
+                    "body-lg": ["Hanken Grotesk"]
+            },
+            "fontSize": {
+                    "label-caps": ["11px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                    "body-sm": ["13px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "headline-sm": ["18px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "code-sm": ["12px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "body-lg": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
+</head>
+<body class="bg-background text-text-primary font-body-md overflow-hidden">
+<!-- Side Navigation Shell -->
+<aside class="fixed left-0 top-0 h-full w-sidebar-width bg-surface-container border-r border-border-subtle flex flex-col py-margin-desktop z-50">
+<div class="px-6 mb-10">
+<h1 class="font-headline-sm text-headline-sm font-bold text-text-primary leading-tight">RAG Workspace</h1>
+<p class="font-label-caps text-[10px] text-text-secondary tracking-widest mt-1">ENTERPRISE TERMINAL</p>
+</div>
+<nav class="flex-1 px-3 space-y-1">
+<div class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-text-secondary hover:bg-surface-variant transition-colors duration-150 cursor-pointer group">
+<span class="material-symbols-outlined">add_comment</span>
+<span class="font-body-md">New Chat</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-text-secondary hover:bg-surface-variant transition-colors duration-150 cursor-pointer group">
+<span class="material-symbols-outlined">chat</span>
+<span class="font-body-md">Conversations</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-text-secondary hover:bg-surface-variant transition-colors duration-150 cursor-pointer group">
+<span class="material-symbols-outlined">description</span>
+<span class="font-body-md">Documents</span>
+</div>
+<!-- ACTIVE TAB: Collections -->
+<div class="flex items-center gap-3 px-4 py-2.5 bg-surface-secondary text-primary border-l-2 border-primary cursor-pointer">
+<span class="material-symbols-outlined">folder_shared</span>
+<span class="font-body-md font-semibold">Collections</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-text-secondary hover:bg-surface-variant transition-colors duration-150 cursor-pointer group">
+<span class="material-symbols-outlined">smart_toy</span>
+<span class="font-body-md">Agents</span>
+</div>
+<div class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-text-secondary hover:bg-surface-variant transition-colors duration-150 cursor-pointer group">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-body-md">Diagnostics</span>
+</div>
+</nav>
+<div class="px-3 mt-auto border-t border-border-subtle pt-6">
+<div class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-text-secondary hover:bg-surface-variant transition-colors duration-150 cursor-pointer">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md">Settings</span>
+</div>
+<div class="mt-6 px-4 flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-accent-indigo flex items-center justify-center font-bold text-white text-xs">JD</div>
+<div class="overflow-hidden">
+<p class="text-body-sm font-semibold truncate">Dr. J. Doe</p>
+<p class="text-[10px] text-text-secondary uppercase">Lead Researcher</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Top Navigation Shell -->
+<header class="fixed top-0 right-0 w-[calc(100%-260px)] h-16 bg-background border-b border-border-subtle flex justify-between items-center px-margin-desktop z-40">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-lg">search</span>
+<input class="w-full bg-surface-container border-none rounded-lg py-2 pl-10 pr-4 text-body-md text-text-primary placeholder:text-text-secondary focus:ring-1 focus:ring-accent-teal transition-all" placeholder="Search collections..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4 text-text-secondary border-r border-border-subtle pr-6">
+<span class="material-symbols-outlined cursor-pointer hover:text-accent-teal transition-colors" title="Memory Stats">memory</span>
+<span class="material-symbols-outlined cursor-pointer hover:text-accent-teal transition-colors" title="Database Status">database</span>
+<span class="material-symbols-outlined cursor-pointer hover:text-accent-teal transition-colors" title="Account">account_circle</span>
+</div>
+<button class="bg-primary-container hover:bg-opacity-90 text-on-primary-container px-4 py-2 rounded-lg flex items-center gap-2 transition-all font-body-md font-semibold">
+<span class="material-symbols-outlined text-lg">add</span>
+                Create New Collection
+            </button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-[260px] pt-16 h-screen overflow-y-auto bg-background p-margin-desktop">
+<!-- Header & Stats Section -->
+<div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<nav class="flex items-center gap-2 text-text-secondary font-label-caps text-[10px] mb-2">
+<span class="hover:text-primary cursor-pointer transition-colors">WORKSPACE</span>
+<span class="material-symbols-outlined text-[12px]">chevron_right</span>
+<span class="text-accent-teal">COLLECTIONS</span>
+</nav>
+<h2 class="font-headline-lg text-headline-lg text-text-primary">Knowledge Collections</h2>
+<p class="text-text-secondary max-w-2xl mt-1">Manage and monitor vector embeddings for high-fidelity retrieval. Ensure your agents are utilizing the most recent verified datasets.</p>
+</div>
+<div class="flex gap-4">
+<div class="bg-surface-container p-4 rounded-xl border border-border-subtle flex flex-col">
+<span class="text-text-secondary font-label-caps text-[10px]">TOTAL CHUNKS</span>
+<span class="text-headline-sm font-code-sm text-accent-indigo">1,248,302</span>
+</div>
+<div class="bg-surface-container p-4 rounded-xl border border-border-subtle flex flex-col">
+<span class="text-text-secondary font-label-caps text-[10px]">ACTIVE INDEXES</span>
+<span class="text-headline-sm font-code-sm text-accent-teal">14</span>
+</div>
+</div>
+</div>
+<!-- Filter Row -->
+<div class="flex items-center justify-between mb-6 bg-surface-container-low p-2 rounded-xl border border-border-subtle">
+<div class="flex gap-1">
+<button class="px-4 py-1.5 rounded-lg bg-surface-secondary text-primary font-body-md border border-primary/20">All Collections</button>
+<button class="px-4 py-1.5 rounded-lg text-text-secondary hover:bg-surface-variant font-body-md transition-colors">Ready</button>
+<button class="px-4 py-1.5 rounded-lg text-text-secondary hover:bg-surface-variant font-body-md transition-colors">Processing</button>
+<button class="px-4 py-1.5 rounded-lg text-text-secondary hover:bg-surface-variant font-body-md transition-colors">Archive</button>
+</div>
+<div class="flex items-center gap-2 px-3 text-text-secondary">
+<span class="font-label-caps text-[10px]">SORT BY</span>
+<select class="bg-transparent border-none text-body-sm text-text-primary focus:ring-0 cursor-pointer">
+<option>Last Updated</option>
+<option>Document Count</option>
+<option>Status</option>
+</select>
+</div>
+</div>
+<!-- Grid of Collections -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-margin-desktop">
+<!-- Card 1: Scientific Papers -->
+<div class="bg-surface-container border border-border-subtle rounded-xl hover:border-accent-indigo transition-all group overflow-hidden flex flex-col" onclick="const drawer = document.getElementById('details-drawer'); drawer.classList.remove('pointer-events-none'); drawer.querySelector('.translate-x-full').classList.remove('translate-x-full'); drawer.querySelector('.opacity-0').classList.remove('opacity-0');">
+<div class="p-5 flex-1">
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-accent-indigo/10 flex items-center justify-center text-accent-indigo">
+<span class="material-symbols-outlined">science</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-text-primary">Scientific Papers</h3>
+<p class="text-[10px] font-label-caps text-text-secondary">INDEX ID: SCI-742-XP</p>
+</div>
+</div>
+<div class="flex items-center gap-1.5 px-2 py-0.5 rounded bg-status-success/10 border border-status-success/20">
+<div class="w-1.5 h-1.5 rounded-full bg-status-success"></div>
+<span class="text-[10px] font-bold text-status-success uppercase">Ready</span>
+</div>
+</div>
+<p class="text-body-sm text-text-secondary line-clamp-2 mb-6">Peer-reviewed research repository covering astrophysics, quantum computing, and bio-engineering from 2020-2024.</p>
+<div class="grid grid-cols-2 gap-4 pt-4 border-t border-border-subtle">
+<div>
+<p class="text-[10px] font-label-caps text-text-secondary mb-1">DOCUMENTS</p>
+<p class="text-body-md font-code-sm text-text-primary">12,450</p>
+</div>
+<div>
+<p class="text-[10px] font-label-caps text-text-secondary mb-1">CHUNKS</p>
+<p class="text-body-md font-code-sm text-text-primary">458.2k</p>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-high px-5 py-3 flex items-center justify-between border-t border-border-subtle">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm text-accent-teal">hub</span>
+<span class="text-[11px] font-code-sm text-text-secondary">text-embedding-3-large</span>
+</div>
+<span class="material-symbols-outlined text-text-secondary cursor-pointer hover:text-primary transition-colors">more_vert</span>
+</div>
+</div>
+<!-- Card 2: Legal Archive -->
+<div class="bg-surface-container border border-border-subtle rounded-xl hover:border-accent-indigo transition-all group overflow-hidden flex flex-col" onclick="const drawer = document.getElementById('details-drawer'); drawer.classList.remove('pointer-events-none'); drawer.querySelector('.translate-x-full').classList.remove('translate-x-full'); drawer.querySelector('.opacity-0').classList.remove('opacity-0');">
+<div class="p-5 flex-1">
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-accent-teal/10 flex items-center justify-center text-accent-teal">
+<span class="material-symbols-outlined">gavel</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-text-primary">Legal Archive</h3>
+<p class="text-[10px] font-label-caps text-text-secondary">INDEX ID: LGL-001-HQ</p>
+</div>
+</div>
+<div class="flex items-center gap-1.5 px-2 py-0.5 rounded bg-status-warning/10 border border-status-warning/20">
+<div class="w-1.5 h-1.5 rounded-full bg-status-warning animate-pulse"></div>
+<span class="text-[10px] font-bold text-status-warning uppercase">Indexing</span>
+</div>
+</div>
+<p class="text-body-sm text-text-secondary line-clamp-2 mb-6">Comprehensive dataset of corporate contracts, compliance guidelines, and regional case laws for enterprise risk mitigation.</p>
+<div class="grid grid-cols-2 gap-4 pt-4 border-t border-border-subtle">
+<div>
+<p class="text-[10px] font-label-caps text-text-secondary mb-1">DOCUMENTS</p>
+<p class="text-body-md font-code-sm text-text-primary">2,104</p>
+</div>
+<div>
+<p class="text-[10px] font-label-caps text-text-secondary mb-1">CHUNKS</p>
+<p class="text-body-md font-code-sm text-text-primary">92.8k</p>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-high px-5 py-3 flex items-center justify-between border-t border-border-subtle">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm text-accent-teal">hub</span>
+<span class="text-[11px] font-code-sm text-text-secondary">ada-002-v2</span>
+</div>
+<span class="material-symbols-outlined text-text-secondary cursor-pointer hover:text-primary transition-colors">more_vert</span>
+</div>
+</div>
+<!-- Card 3: Corporate Wiki -->
+<div class="bg-surface-container border border-border-subtle rounded-xl hover:border-accent-indigo transition-all group overflow-hidden flex flex-col" onclick="const drawer = document.getElementById('details-drawer'); drawer.classList.remove('pointer-events-none'); drawer.querySelector('.translate-x-full').classList.remove('translate-x-full'); drawer.querySelector('.opacity-0').classList.remove('opacity-0');">
+<div class="p-5 flex-1">
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-on-tertiary-container/10 flex items-center justify-center text-on-tertiary-container">
+<span class="material-symbols-outlined">corporate_fare</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-text-primary">Corporate Wiki</h3>
+<p class="text-[10px] font-label-caps text-text-secondary">INDEX ID: CORP-INT-99</p>
+</div>
+</div>
+<div class="flex items-center gap-1.5 px-2 py-0.5 rounded bg-status-error/10 border border-status-error/20">
+<div class="w-1.5 h-1.5 rounded-full bg-status-error"></div>
+<span class="text-[10px] font-bold text-status-error uppercase">Outdated</span>
+</div>
+</div>
+<p class="text-body-sm text-text-secondary line-clamp-2 mb-6">Internal operational procedures, employee handbooks, and project documentation from Confluence and Notion syncs.</p>
+<div class="grid grid-cols-2 gap-4 pt-4 border-t border-border-subtle">
+<div>
+<p class="text-[10px] font-label-caps text-text-secondary mb-1">DOCUMENTS</p>
+<p class="text-body-md font-code-sm text-text-primary">850</p>
+</div>
+<div>
+<p class="text-[10px] font-label-caps text-text-secondary mb-1">CHUNKS</p>
+<p class="text-body-md font-code-sm text-text-primary">14.3k</p>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-high px-5 py-3 flex items-center justify-between border-t border-border-subtle">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm text-accent-teal">hub</span>
+<span class="text-[11px] font-code-sm text-text-secondary">text-embedding-v3-small</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-[10px] text-status-error font-semibold underline cursor-pointer">Update</span>
+<span class="material-symbols-outlined text-text-secondary cursor-pointer hover:text-primary transition-colors">more_vert</span>
+</div>
+</div>
+</div>
+<!-- Card 4: Medical Trials -->
+<div class="bg-surface-container border border-border-subtle rounded-xl hover:border-accent-indigo transition-all group overflow-hidden flex flex-col" onclick="const drawer = document.getElementById('details-drawer'); drawer.classList.remove('pointer-events-none'); drawer.querySelector('.translate-x-full').classList.remove('translate-x-full'); drawer.querySelector('.opacity-0').classList.remove('opacity-0');">
+<div class="p-5 flex-1">
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-accent-indigo/10 flex items-center justify-center text-accent-indigo">
+<span class="material-symbols-outlined">clinical_notes</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-text-primary">Medical Trials</h3>
+<p class="text-[10px] font-label-caps text-text-secondary">INDEX ID: MED-RLT-05</p>
+</div>
+</div>
+<div class="flex items-center gap-1.5 px-2 py-0.5 rounded bg-status-success/10 border border-status-success/20">
+<div class="w-1.5 h-1.5 rounded-full bg-status-success"></div>
+<span class="text-[10px] font-bold text-status-success uppercase">Ready</span>
+</div>
+</div>
+<p class="text-body-sm text-text-secondary line-clamp-2 mb-6">Patient data anonymized logs and clinical trial result summaries for pharmaceutical R&amp;D agents.</p>
+<div class="grid grid-cols-2 gap-4 pt-4 border-t border-border-subtle">
+<div>
+<p class="text-[10px] font-label-caps text-text-secondary mb-1">DOCUMENTS</p>
+<p class="text-body-md font-code-sm text-text-primary">45,120</p>
+</div>
+<div>
+<p class="text-[10px] font-label-caps text-text-secondary mb-1">CHUNKS</p>
+<p class="text-body-md font-code-sm text-text-primary">1.2M</p>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-high px-5 py-3 flex items-center justify-between border-t border-border-subtle">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm text-accent-teal">hub</span>
+<span class="text-[11px] font-code-sm text-text-secondary">text-embedding-3-large</span>
+</div>
+<span class="material-symbols-outlined text-text-secondary cursor-pointer hover:text-primary transition-colors">more_vert</span>
+</div>
+</div>
+<!-- Card 5: Patent Registry -->
+<div class="bg-surface-container border border-border-subtle rounded-xl hover:border-accent-indigo transition-all group overflow-hidden flex flex-col opacity-80 grayscale-[0.5] hover:opacity-100 hover:grayscale-0" onclick="const drawer = document.getElementById('details-drawer'); drawer.classList.remove('pointer-events-none'); drawer.querySelector('.translate-x-full').classList.remove('translate-x-full'); drawer.querySelector('.opacity-0').classList.remove('opacity-0');">
+<div class="p-5 flex-1">
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-tertiary-container/10 flex items-center justify-center text-tertiary-container">
+<span class="material-symbols-outlined">inventory_2</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-text-primary">Patent Registry</h3>
+<p class="text-[10px] font-label-caps text-text-secondary">INDEX ID: PTN-EU-004</p>
+</div>
+</div>
+<div class="flex items-center gap-1.5 px-2 py-0.5 rounded bg-surface-variant border border-border-subtle">
+<span class="text-[10px] font-bold text-text-secondary uppercase">Archived</span>
+</div>
+</div>
+<p class="text-body-sm text-text-secondary line-clamp-2 mb-6">Historical European patent filings 1980-2010. Read-only access for legacy comparisons.</p>
+<div class="grid grid-cols-2 gap-4 pt-4 border-t border-border-subtle">
+<div>
+<p class="text-[10px] font-label-caps text-text-secondary mb-1">DOCUMENTS</p>
+<p class="text-body-md font-code-sm text-text-primary">98,000</p>
+</div>
+<div>
+<p class="text-[10px] font-label-caps text-text-secondary mb-1">CHUNKS</p>
+<p class="text-body-md font-code-sm text-text-primary">2.4M</p>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-high px-5 py-3 flex items-center justify-between border-t border-border-subtle">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm text-accent-teal">hub</span>
+<span class="text-[11px] font-code-sm text-text-secondary">ada-002-v1</span>
+</div>
+<span class="material-symbols-outlined text-text-secondary cursor-pointer hover:text-primary transition-colors">more_vert</span>
+</div>
+</div>
+<!-- Create New Card Placeholder -->
+<div class="border-2 border-dashed border-primary/20 bg-accent-indigo/5 rounded-xl flex flex-col items-center justify-center p-8 hover:bg-accent-indigo/10 hover:border-accent-indigo transition-all cursor-pointer group">
+<div class="w-14 h-14 rounded-full bg-accent-indigo/10 border border-accent-indigo/20 flex items-center justify-center text-accent-indigo group-hover:scale-110 transition-transform mb-4">
+<span class="material-symbols-outlined text-3xl">add</span>
+</div>
+<p class="font-headline-sm text-text-primary group-hover:text-accent-indigo transition-colors">Create New Collection</p>
+<p class="text-body-sm text-text-secondary mt-1">Initialize a new vector store</p>
+</div>
+</div>
+</main>
+<!-- Contextual FAB (Responsive Only) -->
+<button class="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-primary-container text-on-primary-container rounded-full shadow-lg flex items-center justify-center z-50">
+<span class="material-symbols-outlined">add</span>
+</button>
+<script>
+        // Micro-interaction for cards
+        document.querySelectorAll('.bg-surface-container').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-2px)';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0px)';
+            });
+        });
+
+        // Search Bar Focus Effect
+        const searchInput = document.querySelector('input[type="text"]');
+        searchInput.addEventListener('focus', () => {
+            searchInput.parentElement.classList.add('ring-1', 'ring-accent-teal');
+        });
+        searchInput.addEventListener('blur', () => {
+            searchInput.parentElement.classList.remove('ring-1', 'ring-accent-teal');
+        });
+    </script>
+<!-- Details Drawer (Hidden by default) -->
+<div class="fixed inset-0 z-[60] pointer-events-none" id="details-drawer">
+<div class="absolute inset-0 bg-background/80 backdrop-blur-sm opacity-0 transition-opacity duration-300"></div>
+<div class="absolute right-0 top-0 h-full w-full max-w-md bg-surface-container border-l border-border-subtle shadow-2xl translate-x-full transition-transform duration-300 pointer-events-auto flex flex-col">
+<div class="p-6 border-b border-border-subtle flex items-center justify-between">
+<h3 class="font-headline-sm text-text-primary">Collection Details</h3>
+<button class="text-text-secondary hover:text-primary" onclick="document.getElementById('details-drawer').classList.add('pointer-events-none'); this.closest('.translate-x-full').classList.add('translate-x-full');">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="flex-1 overflow-y-auto p-6 space-y-8">
+<section>
+<h4 class="font-label-caps text-[10px] text-accent-teal mb-4 uppercase tracking-widest">Metadata</h4>
+<div class="space-y-4">
+<div>
+<label class="block text-xs text-text-secondary mb-1.5">Collection Name</label>
+<input class="w-full bg-surface-container-low border border-border-subtle rounded-lg px-3 py-2 text-body-md focus:ring-1 focus:ring-accent-indigo" type="text" value="Scientific Papers"/>
+</div>
+<div>
+<label class="block text-xs text-text-secondary mb-1.5">Description</label>
+<textarea class="w-full bg-surface-container-low border border-border-subtle rounded-lg px-3 py-2 text-body-md focus:ring-1 focus:ring-accent-indigo h-24">Peer-reviewed research repository covering astrophysics, quantum computing, and bio-engineering from 2020-2024.</textarea>
+</div>
+</div>
+</section>
+<section>
+<h4 class="font-label-caps text-[10px] text-accent-indigo mb-4 uppercase tracking-widest">Retrieval Strategy</h4>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label class="block text-xs text-text-secondary mb-1.5">Top-K</label>
+<input class="w-full bg-surface-container-low border border-border-subtle rounded-lg px-3 py-2 text-body-md" type="number" value="5"/>
+</div>
+<div>
+<label class="block text-xs text-text-secondary mb-1.5">Score Threshold</label>
+<input class="w-full bg-surface-container-low border border-border-subtle rounded-lg px-3 py-2 text-body-md" step="0.05" type="number" value="0.75"/>
+</div>
+</div>
+</section>
+<section class="bg-surface-container-low p-4 rounded-xl border border-border-subtle">
+<h4 class="font-label-caps text-[10px] text-text-primary mb-4 uppercase tracking-widest">Test Query</h4>
+<div class="flex gap-2">
+<input class="flex-1 bg-background border border-border-subtle rounded-lg px-3 py-2 text-body-sm" placeholder="Ask a question..." type="text"/>
+<button class="bg-accent-indigo text-white px-3 py-2 rounded-lg">
+<span class="material-symbols-outlined text-sm">send</span>
+</button>
+</div>
+</section>
+</div>
+<div class="p-6 border-t border-border-subtle bg-surface-container-high flex gap-3">
+<button class="flex-1 bg-primary-container text-on-primary-container py-2.5 rounded-lg font-semibold">Save Changes</button>
+<button class="px-4 py-2.5 border border-status-error/20 text-status-error rounded-lg hover:bg-status-error/10 transition-colors">Delete</button>
+</div>
+</div>
+</div></body></html>
