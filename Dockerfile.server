@@ -2,16 +2,17 @@
 # Python 3.12, uv, build-essential, cmake, pkg-config
 FROM rag-local-assistant-local-rag-assistant:latest AS runtime
 
-# Fresh workdir (base image has /app with old project)
+ENV UV_PYTHON_PREFERENCE=only-system
+
 WORKDIR /srv/rag-llama
 
-# Install dependencies (cached layer)
+# Install dependencies (fresh venv using system Python)
 COPY llama-server/pyproject.toml llama-server/uv.lock ./
-RUN uv sync --locked --no-dev --no-install-project
+RUN rm -rf .venv && uv sync --locked --no-dev --no-install-project
 
 # Copy source
 COPY llama-server/ ./
 
 EXPOSE 8090
 
-CMD ["uv", "run", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8090"]
+CMD ["uv", "run", "--no-sync", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8090"]
