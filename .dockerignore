@@ -1,0 +1,12 @@
+**/.git
+**/.codegraph
+**/.rag-assistant
+**/node_modules
+**/__pycache__
+**/*.pyc
+**/ui_systemm_rag
+**/tui
+*.gguf
+.env
+.env.local
+*.log

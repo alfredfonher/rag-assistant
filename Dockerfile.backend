@@ -1,0 +1,24 @@
+# ---- Build stage ----
+FROM golang:1.25-alpine AS build
+
+WORKDIR /src
+
+# Copy service module (no external deps, stdlib only)
+COPY service/go.mod service/
+RUN cd service && go mod download
+
+COPY service/ service/
+
+# Build standalone (no workspace needed)
+RUN cd service && CGO_ENABLED=0 go build -o /bin/rag-server ./cmd/server
+
+# ---- Runtime stage ----
+FROM alpine:3.20
+
+RUN apk add --no-cache ca-certificates
+
+COPY --from=build /bin/rag-server /usr/local/bin/rag-server
+
+EXPOSE 8080
+
+ENTRYPOINT ["rag-server"]

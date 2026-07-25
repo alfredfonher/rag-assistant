@@ -1,0 +1,17 @@
+# Reuse the existing rag-local-assistant image which already has:
+# Python 3.12, uv, build-essential, cmake, pkg-config
+FROM rag-local-assistant-local-rag-assistant:latest AS runtime
+
+# Fresh workdir (base image has /app with old project)
+WORKDIR /srv/rag-llama
+
+# Install dependencies (cached layer)
+COPY llama-server/pyproject.toml llama-server/uv.lock ./
+RUN uv sync --locked --no-dev --no-install-project
+
+# Copy source
+COPY llama-server/ ./
+
+EXPOSE 8090
+
+CMD ["uv", "run", "uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8090"]
