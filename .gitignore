@@ -10,3 +10,4 @@ runtime-data/
 
 # Local model weights
 *.gguf
+client/tui

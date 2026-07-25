@@ -11,12 +11,14 @@ type tab int
 
 const (
 	tabQuery tab = iota
+	tabIngest
 	tabStatus
 )
 
 type model struct {
 	active  tab
 	query   queryModel
+	ingest  ingestModel
 	status  statusModel
 }
 
@@ -24,6 +26,7 @@ func New(client *serviceapi.Client) model {
 	return model{
 		active: tabQuery,
 		query:  newQueryModel(client),
+		ingest: newIngestModel(client),
 		status: newStatusModel(client),
 	}
 }
@@ -44,9 +47,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		// Tab switching only when not in text input
 		if msg.Type == tea.KeyTab {
-			if m.active == tabQuery {
+			switch m.active {
+			case tabQuery:
+				m.active = tabIngest
+			case tabIngest:
 				m.active = tabStatus
-			} else {
+			case tabStatus:
 				m.active = tabQuery
 			}
 			return m, nil
@@ -60,23 +66,27 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	// Delegate to active tab
-	if m.active == tabQuery {
-		cmd := tea.Batch(
-			func() tea.Msg { return nil },
-		)
+	switch m.active {
+	case tabQuery:
 		newQuery, qCmd := m.query.Update(msg)
 		m.query = newQuery
-		return m, tea.Batch(cmd, qCmd)
+		return m, qCmd
+	case tabIngest:
+		newIngest, iCmd := m.ingest.Update(msg)
+		m.ingest = newIngest
+		return m, iCmd
+	case tabStatus:
+		newStatus, sCmd := m.status.Update(msg)
+		m.status = newStatus
+		return m, sCmd
 	}
-	newStatus, sCmd := m.status.Update(msg)
-	m.status = newStatus
-	return m, sCmd
+	return m, nil
 }
 
 func (m model) View() string {
 	// Tabs
 	tabs := "  "
-	for i, name := range []string{"Query", "Status"} {
+	for i, name := range []string{"Query", "Ingest", "Status"} {
 		if tab(i) == m.active {
 			tabs += activeTabStyle.Render(name)
 		} else {
@@ -85,10 +95,13 @@ func (m model) View() string {
 	}
 
 	// Content
-	content := ""
-	if m.active == tabQuery {
+	var content string
+	switch m.active {
+	case tabQuery:
 		content = m.query.View()
-	} else {
+	case tabIngest:
+		content = m.ingest.View()
+	case tabStatus:
 		content = m.status.View()
 	}
 

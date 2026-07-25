@@ -38,3 +38,14 @@ type QueryResponse struct {
 	ConversationID string     `json:"conversation_id,omitempty"`
 	Error          *APIError  `json:"error,omitempty"`
 }
+
+type IngestRequest struct {
+	Path string `json:"path"`
+}
+
+type IngestResponse struct {
+	State      string     `json:"state"`
+	DocumentID string     `json:"document_id,omitempty"`
+	Citations  []Citation `json:"citations,omitempty"`
+	Error      *APIError  `json:"error,omitempty"`
+}

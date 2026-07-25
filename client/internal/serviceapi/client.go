@@ -114,6 +114,20 @@ func (c *Client) StreamQuery(ctx context.Context, request QueryRequest) (*QueryS
 	return stream, nil
 }
 
+func (c *Client) Ingest(ctx context.Context, request IngestRequest) (IngestResponse, error) {
+	var response IngestResponse
+	status, err := c.doJSON(ctx, http.MethodPost, "/v1/documents/ingest", request, &response)
+	if err != nil {
+		return IngestResponse{}, err
+	}
+
+	if status >= http.StatusBadRequest {
+		return response, &HTTPStatusError{StatusCode: status, Response: response}
+	}
+
+	return response, nil
+}
+
 func (c *Client) get(ctx context.Context, path string, dst any) error {
 	status, err := c.doJSON(ctx, http.MethodGet, path, nil, dst)
 	if err != nil {

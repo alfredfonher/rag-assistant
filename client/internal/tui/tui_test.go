@@ -15,17 +15,24 @@ func TestTabSwitching(t *testing.T) {
 		t.Fatal("default tab should be query")
 	}
 
-	// Tab -> status
+	// Tab -> ingest
 	m2, _ := m.Update(tea.KeyMsg{Type: tea.KeyTab})
 	m3 := m2.(model)
-	if m3.active != tabStatus {
+	if m3.active != tabIngest {
+		t.Fatal("should switch to ingest tab")
+	}
+
+	// Tab -> status
+	m4, _ := m3.Update(tea.KeyMsg{Type: tea.KeyTab})
+	m5 := m4.(model)
+	if m5.active != tabStatus {
 		t.Fatal("should switch to status tab")
 	}
 
 	// Tab -> back to query
-	m4, _ := m3.Update(tea.KeyMsg{Type: tea.KeyTab})
-	m5 := m4.(model)
-	if m5.active != tabQuery {
+	m6, _ := m5.Update(tea.KeyMsg{Type: tea.KeyTab})
+	m7 := m6.(model)
+	if m7.active != tabQuery {
 		t.Fatal("should switch back to query tab")
 	}
 }
@@ -98,6 +105,65 @@ func TestQueryLoadingState(t *testing.T) {
 func TestStatusTabView(t *testing.T) {
 	m := New(serviceapi.New("http://localhost:9999"))
 	m.active = tabStatus
+
+	view := m.View()
+	if view == "" {
+		t.Fatal("view should not be empty")
+	}
+}
+
+func TestIngestSuccess(t *testing.T) {
+	m := New(serviceapi.New("http://localhost:9999"))
+
+	m.ingest, _ = m.ingest.Update(ingestResultMsg{
+		docID:  "readme",
+		status: "indexed",
+	})
+
+	if m.ingest.docID != "readme" {
+		t.Fatalf("expected 'readme', got %q", m.ingest.docID)
+	}
+	if m.ingest.status != "indexed" {
+		t.Fatalf("expected 'indexed', got %q", m.ingest.status)
+	}
+}
+
+func TestIngestError(t *testing.T) {
+	m := New(serviceapi.New("http://localhost:9999"))
+
+	m.ingest, _ = m.ingest.Update(ingestResultMsg{
+		err: errors.New("unsupported file type"),
+	})
+
+	if m.ingest.err == "" {
+		t.Fatal("error should be displayed")
+	}
+	if m.ingest.loading {
+		t.Fatal("loading should be false after error")
+	}
+}
+
+func TestIngestClearOnEsc(t *testing.T) {
+	m := New(serviceapi.New("http://localhost:9999"))
+
+	// Set some state
+	m.ingest, _ = m.ingest.Update(ingestResultMsg{docID: "test", status: "indexed"})
+	m.ingest.input.SetValue("/some/path.md")
+
+	// Esc should clear
+	m2, _ := m.ingest.Update(tea.KeyMsg{Type: tea.KeyEsc})
+
+	if m2.input.Value() != "" {
+		t.Fatal("Esc should clear the input")
+	}
+	if m2.docID != "" {
+		t.Fatal("Esc should clear the doc ID")
+	}
+}
+
+func TestIngestTabView(t *testing.T) {
+	m := New(serviceapi.New("http://localhost:9999"))
+	m.active = tabIngest
 
 	view := m.View()
 	if view == "" {
