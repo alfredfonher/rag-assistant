@@ -1,14 +1,54 @@
-# Python environments and caches
+# ============================================================================
+# rag-assistant .gitignore
+# ============================================================================
+
+# -- Python --
 .venv/
 __pycache__/
 *.py[cod]
 .pytest_cache/
 
-# Local runtime state
+# -- Go build artifacts --
+client/tui
+
+# -- Local runtime state --
 .rag-assistant/
 runtime-data/
 
-# Local model weights
+# -- Local model weights --
 *.gguf
-client/tui
-ui_systemm_rag/
+models/*.gguf
+
+# -- Frontend (Next.js) --
+ui_system_rag/node_modules/
+ui_system_rag/.next/
+ui_system_rag/.env.local
+ui_system_rag/out/
+
+# -- Dev tooling (local, never commit) --
+.codegraph/
+.atl/
+.engram/
+.opencode/
+*.db
+*.db-journal
+
+# -- Design prototypes (local reference only) --
+stitch_prd_execution_engine/
+
+# -- Assets (dev resources, not code) --
+assets/
+
+# -- OS / Editor --
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# -- Logs --
+*.log
+npm-debug.log*
+pnpm-debug.log*
