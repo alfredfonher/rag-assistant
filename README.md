@@ -1,65 +1,102 @@
-# rag-assistant local runtime
+# rag-assistant
 
-This repository runs the Go RAG service beside the Python llama.cpp service without Docker. PR1 provides reproducible prerequisites, immutable model acquisition, and receipt-backed Python health telemetry. PR2 adds lifecycle management with start/stop/status, PID identity safety, and graceful signal shutdown.
+A full-stack RAG system that ingests documents, performs semantic search, and streams LLM responses — all running locally with zero cloud dependencies.
 
-## Clean-clone quick path
+## Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| Backend | Go (stdlib net/http, hexagonal architecture, zero external deps) |
+| Inference | Python FastAPI + llama-cpp-python |
+| Frontend | Next.js 16, React 19, shadcn/ui, Prisma |
+| TUI Client | Go (Bubbletea) |
+| Models | nomic-embed-text v1.5 (embeddings), Gemma 3 1B / Qwen 3.5 0.8B (chat) |
+| Orchestration | Docker Compose |
+| CI | GitHub Actions |
+
+## Quick Start
+
+**Option A — Docker (recommended):**
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+**Option B — Manual:**
 
 ```bash
 cp .env.example .env
 bash scripts/bootstrap.sh
 bash scripts/models.sh fetch
-bash scripts/tests/bootstrap.sh
-bash scripts/tests/models.sh
-llama-server/.venv/bin/python -m pytest -q llama-server/tests/test_server.py
 ```
 
-`scripts/bootstrap.sh` requires Linux, Bash 4.4+, Python **3.12**, `uv`, `curl`, GNU `sha256sum`, `setsid`, and Go 1.22+. It reports every missing prerequisite and a remediation before changing environment state. `models.sh fetch` resumes `.partial` files, verifies the exact pinned SHA-256, atomically installs the GGUF, and writes `.rag-assistant/verified-models.tsv`. Repeating fetch is safe and does not rewrite verified artifacts.
+The bootstrap script requires Linux, Bash 4.4+, Python 3.12, `uv`, `curl`, `sha256sum`, and Go 1.22+. It reports missing prerequisites before changing environment state. The model fetch script resumes partial downloads, verifies SHA-256 checksums, and writes a verification receipt.
 
-## Configuration
+## Architecture
 
-`.env` is optional. Shell values supplied on the command line take precedence over file values; parsing accepts literal assignments only and never evaluates shell code. Model binaries, partial downloads, `.env`, and verification state are ignored by Git.
-
-## Lifecycle management
-
-```bash
-bash scripts/runtime.sh start <service-name> <command...>
-bash scripts/runtime.sh status <service-name>
-bash scripts/runtime.sh stop <service-name>
+```
+┌─────────────────┐     ┌──────────────────┐
+│   Next.js UI    │     │   Go TUI Client  │
+│  (port 3000)    │     │  (Bubbletea)     │
+└────────┬────────┘     └────────┬─────────┘
+         │                       │
+         ▼                       ▼
+┌─────────────────────────────────────────┐
+│          Go Backend (port 8080)         │
+│     Hexagonal architecture, stdlib      │
+└────────────────┬────────────────────────┘
+                 │
+                 ▼
+┌─────────────────────────────────────────┐
+│     Python Inference (port 8090)        │
+│   FastAPI + llama-cpp-python server     │
+└────────────────┬────────────────────────┘
+                 │
+                 ▼
+┌─────────────────────────────────────────┐
+│        llama.cpp (local GGUF)           │
+│  Embeddings + Chat models on disk       │
+└─────────────────────────────────────────┘
 ```
 
-PR2 provides deterministic start/stop/status with:
-- **PID identity safety**: rejects reused PID/PGID/UID/cmdline/start-time
-- **Idempotent start**: skip if already running with matching identity
-- **Graceful shutdown**: SIGTERM with configurable timeout, then SIGKILL fallback
-- **Atomic PID files**: written via temp+rename, stale detection via `kill -0`
-- **Go graceful shutdown**: `main.go` handles SIGTERM/SIGINT with 3s drain timeout
+## Project Structure
 
-Environment variables: `RAG_DATA_DIR`, `RAG_LOG_DIR`, `RAG_SHUTDOWN_TIMEOUT` (default 5s).
-
-## Verification and health
-
-```bash
-bash scripts/models.sh verify
+```
+rag-assistant/
+├── service/           # Go backend (hexagonal ports + adapters)
+├── llama-server/      # Python inference server
+├── web/               # Next.js frontend
+├── cmd/               # Go TUI client
+├── scripts/           # Bootstrap, models, lifecycle, smoke tests
+├── docker-compose.yml
+└── .env.example
 ```
 
-`GET /healthz` remains HTTP 200 with its existing `status`, model paths, and lazy `*_loaded` booleans. It adds `embedding_verified` and `llm_verified`, which are true only when the manifest digest, immutable tuple, receipt, and current file fingerprint match. Health checks never load models; lazy-loaded state is telemetry, not readiness.
+## Features
 
-## Readiness
+- **Document ingestion** — chunk, embed, and index into vector storage
+- **Semantic search** — query documents by meaning, not keywords
+- **SSE streaming** — real-time token-by-token LLM responses
+- **Health probes** — `/healthz` for status, `/readyz` for dependency checks
+- **Model verification** — SHA-256 integrity checks on all GGUF files
+- **Dual chat models** — Gemma 3 1B or Qwen 3.5 0.8B via config
 
-`GET /readyz` returns HTTP 200 when the llama-server dependency is reachable and both embedding and LLM models are loaded. Returns HTTP 503 with dependency reasons when the server is unreachable or models are not loaded. Readiness never loads models; it checks the existing health endpoint.
-
-## End-to-end smoke test
+## Testing
 
 ```bash
+# Go unit tests
+go test ./...
+
+# Python inference tests
+llama-server/.venv/bin/python -m pytest -q llama-server/tests/
+
+# Full smoke test (requires running llama-server on :8090)
 bash scripts/smoke.sh
 ```
 
-Requires a running llama-server on port 8090 (configurable via `RAG_LLAMA_PORT`). The smoke test ingests `scripts/fixtures/smoke.md`, queries for the answer, verifies the readiness endpoint, and proves no GGUF binaries or temp files leak into the data directory. On failure, it cleans up all managed processes and temp data.
+The smoke test ingests a fixture document, queries the answer, verifies the readiness endpoint, and confirms no GGUF binaries leak into the data directory.
 
-## Rollback
+## License
 
-To roll back PR1, revert the PR1 setup, manifest, model-script, receipt-health, test, and documentation changes. Do not delete ignored `models/*.gguf`; a later bootstrap can reuse them after verification. Do not commit model binaries or `.env`.
-
-To roll back PR2, revert `scripts/runtime.sh`, `scripts/lib/{process,wait}.sh`, `scripts/tests/runtime.sh`, and the Go signal-shutdown changes in `service/cmd/server/`. PR1 remains intact.
-
-PR2 intentionally does not add readiness probing, Go dependency-backed health, or the real-model smoke test; those belong to PR3.
+MIT
