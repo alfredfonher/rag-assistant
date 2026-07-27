@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+    --background: 222 35% 6%;
+    --foreground: 210 30% 96%;
+    --card: 222 28% 9%;
+    --border: 218 20% 18%;
+    --muted: 220 22% 13%;
+    --muted-foreground: 215 14% 64%;
+    --primary: 166 72% 48%;
+    --primary-foreground: 222 35% 6%;
+    --accent: 45 92% 58%;
+  }
+
+  * { @apply border-border; }
+
+  html { background: hsl(var(--background)); }
+
+  body {
+    @apply min-h-screen bg-background text-foreground antialiased;
+    background-image:
+      radial-gradient(circle at 85% -10%, hsl(var(--primary) / 0.12), transparent 34rem),
+      linear-gradient(hsl(var(--border) / 0.18) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--border) / 0.18) 1px, transparent 1px);
+    background-size: auto, 48px 48px, 48px 48px;
+  }
+
+  ::selection { background: hsl(var(--primary) / 0.3); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
