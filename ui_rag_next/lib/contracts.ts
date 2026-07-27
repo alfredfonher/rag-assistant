@@ -5,15 +5,48 @@ export interface ServiceStatus {
 
 export interface QueryRequest {
   query: string;
-  agent_id?: string;
-  collection_ids?: string[];
   conversation_id?: string;
 }
 
+export type QueryState =
+  | "streaming"
+  | "retrieving"
+  | "answered"
+  | "insufficient_context"
+  | "unsupported";
+
+export type QueryStreamEventName =
+  | "start"
+  | "retrieval"
+  | "content"
+  | "citation"
+  | "done";
+
+export interface Citation {
+  document_id: string;
+  chunk_id: string;
+  snippet?: string;
+}
+
+export interface APIError {
+  code: string;
+  message: string;
+}
+
 export interface QueryResponse {
-  answer: string;
-  citations?: unknown[];
+  state: QueryState;
+  event?: QueryStreamEventName;
+  kind?: string;
+  answer?: string;
+  citations?: Citation[];
   conversation_id?: string;
+  error?: APIError;
+}
+
+export interface QueryStreamMessage {
+  event?: QueryStreamEventName;
+  id?: string;
+  frame: QueryResponse;
 }
 
 export interface IngestDocumentRequest {
