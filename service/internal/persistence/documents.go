@@ -53,7 +53,7 @@ func (r *FileDocumentRepo) ListByCollection(collectionID string) ([]domain.Docum
 	if err != nil {
 		return nil, err
 	}
-	var out []domain.Document
+	out := make([]domain.Document, 0)
 	for _, d := range data {
 		if d.CollectionID == collectionID {
 			out = append(out, d)
@@ -120,6 +120,9 @@ func (r *FileDocumentRepo) Delete(id string) error {
 func (r *FileDocumentRepo) read() ([]domain.Document, error) {
 	raw, err := os.ReadFile(r.path)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return []domain.Document{}, nil
+		}
 		return nil, err
 	}
 	var out []domain.Document

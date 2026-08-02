@@ -15,7 +15,8 @@ SERVICE_PORT="${RAG_SERVICE_PORT:-8091}"
 LLAMA_URL="http://127.0.0.1:${LLAMA_PORT}"
 SERVICE_URL="http://127.0.0.1:${SERVICE_PORT}"
 DATA_DIR=$(mktemp -d)
-FIXTURE="$ROOT/scripts/fixtures/smoke.md"
+INGEST_ROOT="$ROOT/scripts/fixtures"
+FIXTURE="smoke.md"
 
 cleanup() {
   # Stop service if running
@@ -45,6 +46,7 @@ INGEST_RESP=$(curl -sf -X POST "$SERVICE_URL/v1/documents/ingest" \
   # Service may not be running — try starting it
   RAG_HTTP_ADDR="127.0.0.1:${SERVICE_PORT}" \
   RAG_DATA_DIR="$DATA_DIR" \
+  RAG_INGEST_ROOT="$INGEST_ROOT" \
   RAG_LLAMA_SERVER_URL="$LLAMA_URL" \
   go run -C "$ROOT/service" ./cmd/server &
   SERVICE_PID=$!

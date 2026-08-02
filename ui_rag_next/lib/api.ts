@@ -1,5 +1,9 @@
 import type {
+  APIError,
+  Citation,
+  Document,
   IngestDocumentRequest,
+  IngestDocumentResponse,
   QueryRequest,
   QueryResponse,
   QueryState,
@@ -22,24 +26,137 @@ export const endpoints = {
   resource: (name: ResourceName) => `/v1/${name}`,
 } as const;
 
+export class APIHttpError extends Error {
+  constructor(
+    public readonly status: number,
+    public readonly backendError?: APIError,
+  ) {
+    super(backendError?.message ?? `The backend returned HTTP ${status}.`);
+    this.name = "APIHttpError";
+  }
+}
+
+export class MalformedAPIResponseError extends Error {
+  constructor(message: string, public readonly cause?: unknown) {
+    super(message);
+    this.name = "MalformedAPIResponseError";
+  }
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...init?.headers,
-    },
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      ...init,
+      headers: {
+        "Content-Type": "application/json",
+        ...init?.headers,
+      },
+    });
+  } catch (error) {
+    if (isAbortError(error, init?.signal ?? undefined)) throw error;
+    throw new BackendUnavailableError(error);
+  }
 
   if (!response.ok) {
-    throw new Error(`API request failed with status ${response.status}`);
+    throw new APIHttpError(response.status, await readAPIError(response));
   }
 
   if (response.status === 204) {
     return undefined as T;
   }
 
-  return response.json() as Promise<T>;
+  return readJSON(response, init?.signal ?? undefined) as Promise<T>;
+}
+
+const documentStatuses = new Set(["pending", "indexing", "ready", "error", "outdated"]);
+const ingestStates = new Set(["indexed", "unindexed", "unsupported"]);
+
+function isAPIError(value: unknown): value is APIError {
+  return isRecord(value) && typeof value.code === "string" && typeof value.message === "string";
+}
+
+function isCitation(value: unknown): value is Citation {
+  return isRecord(value)
+    && typeof value.document_id === "string"
+    && typeof value.chunk_id === "string"
+    && (value.snippet === undefined || typeof value.snippet === "string");
+}
+
+function isDocument(value: unknown): value is Document {
+  return isRecord(value)
+    && typeof value.id === "string"
+    && typeof value.collection_id === "string"
+    && typeof value.filename === "string"
+    && typeof value.path === "string"
+    && typeof value.status === "string"
+    && documentStatuses.has(value.status)
+    && typeof value.chunks_count === "number"
+    && (value.error_message === undefined || typeof value.error_message === "string")
+    && typeof value.created_at === "string"
+    && typeof value.updated_at === "string";
+}
+
+function isIngestResponse(value: unknown): value is IngestDocumentResponse {
+  return isRecord(value)
+    && typeof value.state === "string"
+    && ingestStates.has(value.state)
+    && (value.document_id === undefined || typeof value.document_id === "string")
+    && (value.citations === undefined || (Array.isArray(value.citations) && value.citations.every(isCitation)))
+    && (value.error === undefined || isAPIError(value.error));
+}
+
+async function readJSON(response: Response, signal?: AbortSignal): Promise<unknown> {
+  try {
+    return await response.json();
+  } catch (error) {
+    if (isAbortError(error, signal)) throw error;
+    throw new MalformedAPIResponseError("The backend returned invalid JSON.", error);
+  }
+}
+
+async function readAPIError(response: Response): Promise<APIError | undefined> {
+  try {
+    const value: unknown = await response.json();
+    return isAPIError(value) ? value : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export async function listDocuments(options: { signal?: AbortSignal } = {}): Promise<Document[]> {
+  const value = await request<unknown>(endpoints.resource("documents"), {
+    cache: "no-store",
+    signal: options.signal,
+  });
+  if (!Array.isArray(value) || !value.every(isDocument)) {
+    throw new MalformedAPIResponseError("The backend returned an invalid document list.");
+  }
+  return value;
+}
+
+export async function ingestDocument(
+  payload: IngestDocumentRequest,
+  options: { signal?: AbortSignal } = {},
+): Promise<IngestDocumentResponse> {
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}${endpoints.ingest}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      cache: "no-store",
+      signal: options.signal,
+    });
+  } catch (error) {
+    if (isAbortError(error, options.signal)) throw error;
+    throw new BackendUnavailableError(error);
+  }
+
+  const value = await readJSON(response, options.signal);
+  if (isIngestResponse(value)) return value;
+  if (!response.ok && isAPIError(value)) throw new APIHttpError(response.status, value);
+  throw new MalformedAPIResponseError("The backend returned an invalid ingest response.");
 }
 
 async function check(path: string): Promise<ServiceStatus> {
@@ -58,11 +175,10 @@ export const api = {
       method: "POST",
       body: JSON.stringify(payload),
     }),
-  ingest: (payload: IngestDocumentRequest) =>
-    request<ResourceRecord>(endpoints.ingest, {
-      method: "POST",
-      body: JSON.stringify(payload),
-    }),
+  documents: {
+    list: listDocuments,
+    ingest: ingestDocument,
+  },
   list: <T extends ResourceRecord>(resource: ResourceName) =>
     request<T[]>(endpoints.resource(resource)),
   create: <T extends ResourceRecord>(resource: ResourceName, payload: unknown) =>

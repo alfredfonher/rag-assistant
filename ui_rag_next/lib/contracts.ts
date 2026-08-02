@@ -51,7 +51,29 @@ export interface QueryStreamMessage {
 
 export interface IngestDocumentRequest {
   path: string;
-  collection_id?: string;
+}
+
+export type DocumentStatus = "pending" | "indexing" | "ready" | "error" | "outdated";
+
+export interface Document {
+  id: string;
+  collection_id: string;
+  filename: string;
+  path: string;
+  status: DocumentStatus;
+  chunks_count: number;
+  error_message?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type IngestDocumentState = "indexed" | "unindexed" | "unsupported";
+
+export interface IngestDocumentResponse {
+  state: IngestDocumentState;
+  document_id?: string;
+  citations?: Citation[];
+  error?: APIError;
 }
 
 export interface ResourceRecord {
@@ -61,7 +83,6 @@ export interface ResourceRecord {
 
 export type Agent = ResourceRecord;
 export type Collection = ResourceRecord;
-export type Document = ResourceRecord;
 export type Conversation = ResourceRecord;
 
 export type ResourceName =

@@ -28,6 +28,7 @@ services:
       - RAG_HTTP_ADDR=:8080
       - RAG_LLAMA_SERVER_URL=http://llama-server:8090
       - RAG_DATA_DIR=/data
+      - RAG_INGEST_ROOT=/docs
     volumes:
       - rag-data:/data
       - ./docs:/docs:ro

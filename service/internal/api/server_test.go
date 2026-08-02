@@ -95,6 +95,7 @@ func TestQueryContract(t *testing.T) {
 		response: domain.QueryResponse{
 			State:          domain.QueryStateInsufficientContext,
 			ConversationID: "conv-1",
+			Citations:      []domain.Citation{{DocumentID: "doc-1", ChunkID: "chunk-1", Snippet: "query snippet remains public"}},
 			Error:          &domain.APIError{Code: "insufficient_context", Message: "no relevant context found"},
 		},
 	}).Handler().ServeHTTP(rec, req)
@@ -115,6 +116,9 @@ func TestQueryContract(t *testing.T) {
 	}
 	if response.ConversationID != "conv-1" {
 		t.Fatalf("expected conversation id to be preserved, got %q", response.ConversationID)
+	}
+	if len(response.Citations) != 1 || response.Citations[0].Snippet != "query snippet remains public" {
+		t.Fatalf("expected query citation snippet to be preserved, got %#v", response.Citations)
 	}
 }
 
@@ -174,6 +178,21 @@ func TestIngestContract(t *testing.T) {
 			}},
 			wantStatus: http.StatusServiceUnavailable,
 		},
+		{
+			name:       "missing document",
+			response:   domain.IngestResponse{State: domain.DocumentStateUnsupported, Error: &domain.APIError{Code: "document_not_found", Message: "document was not found in the configured ingest root"}},
+			wantStatus: http.StatusNotFound,
+		},
+		{
+			name:       "document too large",
+			response:   domain.IngestResponse{State: domain.DocumentStateUnsupported, Error: &domain.APIError{Code: "document_too_large", Message: "document exceeds the 10 MiB size limit"}},
+			wantStatus: http.StatusRequestEntityTooLarge,
+		},
+		{
+			name:       "ingest root unavailable",
+			response:   domain.IngestResponse{State: domain.DocumentStateUnsupported, Error: &domain.APIError{Code: "ingest_root_unavailable", Message: "configured ingest root is unavailable"}},
+			wantStatus: http.StatusServiceUnavailable,
+		},
 	}
 
 	for _, tt := range tests {
@@ -181,7 +200,7 @@ func TestIngestContract(t *testing.T) {
 			t.Parallel()
 
 			rec := httptest.NewRecorder()
-			req := httptest.NewRequest(http.MethodPost, "/v1/documents/ingest", strings.NewReader(`{"path":"/tmp/guide.md"}`))
+			req := httptest.NewRequest(http.MethodPost, "/v1/documents/ingest", strings.NewReader(`{"path":"guides/guide.md"}`))
 
 			NewServer("rag-assistant", nil, stubIngestService{response: tt.response}, nil).Handler().ServeHTTP(rec, req)
 
@@ -194,7 +213,46 @@ func TestIngestContract(t *testing.T) {
 			if response.State != tt.response.State {
 				t.Fatalf("unexpected ingest response: %#v", response)
 			}
+			if strings.Contains(rec.Body.String(), "normalized_text") {
+				t.Fatalf("ingest response exposed normalized_text: %s", rec.Body.String())
+			}
 		})
+	}
+}
+
+func TestIngestContractRedactsCitationSnippets(t *testing.T) {
+	t.Parallel()
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/v1/documents/ingest", strings.NewReader(`{"path":"guides/guide.md"}`))
+	serviceResponse := domain.IngestResponse{
+		State:      domain.DocumentStateIndexed,
+		DocumentID: "guide",
+		Citations: []domain.Citation{
+			{DocumentID: "guide", ChunkID: "guide-chunk-1", Snippet: "secret indexed text one"},
+			{DocumentID: "guide", ChunkID: "guide-chunk-2", Snippet: "secret indexed text two"},
+		},
+	}
+
+	NewServer("rag-assistant", nil, stubIngestService{response: serviceResponse}, nil).Handler().ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("expected status %d, got %d", http.StatusCreated, rec.Code)
+	}
+	body := rec.Body.String()
+	for _, forbidden := range []string{"normalized_text", "snippet", "secret indexed text"} {
+		if strings.Contains(body, forbidden) {
+			t.Fatalf("ingest response exposed %q: %s", forbidden, body)
+		}
+	}
+
+	var response domain.IngestResponse
+	decodeResponse(t, rec.Body.Bytes(), &response)
+	if len(response.Citations) != 2 {
+		t.Fatalf("expected 2 citation metadata entries, got %#v", response.Citations)
+	}
+	if response.Citations[0].DocumentID != "guide" || response.Citations[0].ChunkID != "guide-chunk-1" || response.Citations[1].ChunkID != "guide-chunk-2" {
+		t.Fatalf("expected citation IDs to be preserved, got %#v", response.Citations)
 	}
 }
 

@@ -11,6 +11,7 @@ type Config struct {
 	ServiceName    string
 	HTTPAddr       string
 	DataDir        string
+	IngestRoot     string
 	LlamaServerURL string
 }
 
@@ -19,6 +20,7 @@ func Default() Config {
 		ServiceName:    "rag-assistant",
 		HTTPAddr:       ":8080",
 		DataDir:        ".rag-assistant",
+		IngestRoot:     "docs",
 		LlamaServerURL: "http://127.0.0.1:8090",
 	}
 }
@@ -36,6 +38,10 @@ func Load() (Config, error) {
 
 	if value := strings.TrimSpace(os.Getenv("RAG_DATA_DIR")); value != "" {
 		cfg.DataDir = value
+	}
+
+	if value, ok := os.LookupEnv("RAG_INGEST_ROOT"); ok {
+		cfg.IngestRoot = strings.TrimSpace(value)
 	}
 
 	if value := strings.TrimSpace(os.Getenv("RAG_LLAMA_SERVER_URL")); value != "" {
@@ -60,6 +66,10 @@ func (c Config) Validate() error {
 
 	if strings.TrimSpace(c.DataDir) == "" {
 		return fmt.Errorf("data directory is required")
+	}
+
+	if strings.TrimSpace(c.IngestRoot) == "" {
+		return fmt.Errorf("ingest root is required")
 	}
 
 	llamaURL, err := url.Parse(strings.TrimSpace(c.LlamaServerURL))

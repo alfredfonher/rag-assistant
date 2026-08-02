@@ -188,6 +188,37 @@ func TestDocumentRepoPersistenceAcrossReload(t *testing.T) {
 	}
 }
 
+func TestDocumentRepoFreshState(t *testing.T) {
+	dir := t.TempDir()
+	repo, err := persistence.NewFileDocumentRepo(dir)
+	if err != nil {
+		t.Fatalf("new repository: %v", err)
+	}
+
+	documents, err := repo.List()
+	if err != nil {
+		t.Fatalf("list fresh repository: %v", err)
+	}
+	if documents == nil || len(documents) != 0 {
+		t.Fatalf("expected non-nil empty list, got %#v", documents)
+	}
+
+	byCollection, err := repo.ListByCollection("missing")
+	if err != nil {
+		t.Fatalf("list collection in fresh repository: %v", err)
+	}
+	if byCollection == nil || len(byCollection) != 0 {
+		t.Fatalf("expected non-nil empty collection list, got %#v", byCollection)
+	}
+
+	if _, err := repo.Get("missing"); !os.IsNotExist(err) {
+		t.Fatalf("expected not found from Get, got %v", err)
+	}
+	if err := repo.Delete("missing"); !os.IsNotExist(err) {
+		t.Fatalf("expected not found from Delete, got %v", err)
+	}
+}
+
 func TestRepoHandlesMissingFile(t *testing.T) {
 	dir := t.TempDir()
 	repo, err := persistence.NewFileAgentRepo(dir)

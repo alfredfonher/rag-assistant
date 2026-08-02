@@ -69,9 +69,8 @@ type QueryResponse struct {
 }
 
 type IngestResponse struct {
-	State          string     `json:"state"`
-	DocumentID     string     `json:"document_id,omitempty"`
-	NormalizedText string     `json:"normalized_text,omitempty"`
-	Citations      []Citation `json:"citations,omitempty"`
-	Error          *APIError  `json:"error,omitempty"`
+	State      string     `json:"state"`
+	DocumentID string     `json:"document_id,omitempty"`
+	Citations  []Citation `json:"citations,omitempty"`
+	Error      *APIError  `json:"error,omitempty"`
 }

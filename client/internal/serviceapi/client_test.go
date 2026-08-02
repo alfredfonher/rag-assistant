@@ -41,6 +41,16 @@ func TestClientContract(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 			_, _ = w.Write([]byte("data: {\"state\":\"streaming\",\"conversation_id\":\"conv-1\"}\n\n"))
 			_, _ = w.Write([]byte("data: {\"state\":\"answered\",\"answer\":\"ready\",\"conversation_id\":\"conv-1\",\"citations\":[{\"document_id\":\"doc-1\",\"chunk_id\":\"chunk-7\"}]}\n\n"))
+		case "/v1/documents/ingest":
+			var request IngestRequest
+			if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+				t.Fatalf("failed to decode ingest request: %v", err)
+			}
+			if request.Path != "guides/guide.md" {
+				t.Fatalf("unexpected ingest path: %q", request.Path)
+			}
+			w.WriteHeader(http.StatusCreated)
+			_, _ = w.Write([]byte(`{"state":"indexed","document_id":"guide"}`))
 		default:
 			w.WriteHeader(http.StatusNotFound)
 		}
@@ -106,5 +116,13 @@ func TestClientContract(t *testing.T) {
 
 	if _, err := stream.Next(); err != io.EOF {
 		t.Fatalf("expected EOF after stream end, got %v", err)
+	}
+
+	ingest, err := client.Ingest(context.Background(), IngestRequest{Path: "guides/guide.md"})
+	if err != nil {
+		t.Fatalf("Ingest() error: %v", err)
+	}
+	if ingest.State != "indexed" || ingest.DocumentID != "guide" {
+		t.Fatalf("unexpected ingest response: %#v", ingest)
 	}
 }

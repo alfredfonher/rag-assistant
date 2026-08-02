@@ -21,7 +21,7 @@ type ingestModel struct {
 
 func newIngestModel(client *serviceapi.Client) ingestModel {
 	ti := textinput.New()
-	ti.Placeholder = "path/to/document.md"
+	ti.Placeholder = "guides/document.md"
 	ti.CharLimit = 512
 	ti.Width = 60
 
@@ -93,12 +93,13 @@ func (m ingestModel) Update(msg tea.Msg) (ingestModel, tea.Cmd) {
 func (m ingestModel) View() string {
 	var b strings.Builder
 
+	b.WriteString("Path relative to the configured ingest root\n")
 	b.WriteString(m.input.View() + "\n")
 
 	if m.loading {
 		b.WriteString(mutedStyle.Render("  ingesting..."))
 	} else if m.err != "" {
-		b.WriteString(errorStyle.Render("  ✗ "+m.err))
+		b.WriteString(errorStyle.Render("  ✗ " + m.err))
 	} else if m.docID != "" {
 		b.WriteString(successStyle.Render(fmt.Sprintf("  ✓ %s (%s)", m.docID, m.status)))
 	}

@@ -35,6 +35,14 @@ func (e *HTTPStatusError) Error() string {
 		if resp != nil && resp.Error != nil {
 			return fmt.Sprintf("service returned %d: %s", e.StatusCode, resp.Error.Message)
 		}
+	case IngestResponse:
+		if resp.Error != nil {
+			return fmt.Sprintf("service returned %d: %s", e.StatusCode, resp.Error.Message)
+		}
+	case *IngestResponse:
+		if resp != nil && resp.Error != nil {
+			return fmt.Sprintf("service returned %d: %s", e.StatusCode, resp.Error.Message)
+		}
 	}
 
 	return fmt.Sprintf("service returned %d", e.StatusCode)

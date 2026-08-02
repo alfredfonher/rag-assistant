@@ -177,7 +177,23 @@ func (s *Server) ingest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := s.ingestService.Ingest(r.Context(), request)
-	writeJSON(w, ingestStatus(response), response)
+	writeJSON(w, ingestStatus(response), publicIngestResponse(response))
+}
+
+func publicIngestResponse(response domain.IngestResponse) domain.IngestResponse {
+	if len(response.Citations) == 0 {
+		return response
+	}
+
+	citations := make([]domain.Citation, len(response.Citations))
+	for i, citation := range response.Citations {
+		citations[i] = domain.Citation{
+			DocumentID: citation.DocumentID,
+			ChunkID:    citation.ChunkID,
+		}
+	}
+	response.Citations = citations
+	return response
 }
 
 func (s *Server) queryStream(w http.ResponseWriter, r *http.Request) {
@@ -309,9 +325,15 @@ func ingestStatus(response domain.IngestResponse) int {
 	case domain.DocumentStateUnsupported:
 		if response.Error != nil {
 			switch response.Error.Code {
+			case "ingest_root_unavailable":
+				return http.StatusServiceUnavailable
+			case "document_not_found":
+				return http.StatusNotFound
 			case "unsupported_document":
 				return http.StatusUnsupportedMediaType
-			case "empty_document":
+			case "document_too_large":
+				return http.StatusRequestEntityTooLarge
+			case "document_unreadable", "document_not_regular", "empty_document":
 				return http.StatusUnprocessableEntity
 			}
 		}

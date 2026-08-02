@@ -47,10 +47,14 @@ func New() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
+	ingestService, err := ingest.New(persistentRetriever, cfg.IngestRoot)
+	if err != nil {
+		return nil, err
+	}
 
 	server := api.NewServerWithDeps(cfg.ServiceName, api.ServerDeps{
-		Readiness: readiness.LlamaReadiness{Client: llamaClient},
-		Ingest:        ingest.New(persistentRetriever),
+		Readiness:     readiness.LlamaReadiness{Client: llamaClient},
+		Ingest:        ingestService,
 		Query:         query.New(persistentRetriever, llama.NewComposer(llamaClient), conversationStore),
 		Agents:        agentRepo,
 		Collections:   collectionRepo,

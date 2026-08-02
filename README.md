@@ -82,6 +82,12 @@ rag-assistant/
 - **Model verification** — SHA-256 integrity checks on all GGUF files
 - **Dual chat models** — Gemma 3 1B or Qwen 3.5 0.8B via config
 
+## Document Ingestion
+
+`POST /v1/documents/ingest` accepts a `.txt`, `.md`, or `.markdown` path relative to `RAG_INGEST_ROOT`; absolute paths and traversal are rejected. The local default is `docs`, resolved relative to the backend process's current working directory; set `RAG_INGEST_ROOT` to override it. Docker Compose sets the root to `/docs`, backed by the read-only `./docs:/docs:ro` mount, so a request for the repository file `docs/docker.md` uses `{"path":"docker.md"}`.
+
+Documents are limited to regular files of at most 10 MiB. The response reports indexing state, document ID, citations, and stable errors; normalized document content is never returned. Index ingestion and the CRUD document registry remain separate flows.
+
 ## Testing
 
 ```bash
