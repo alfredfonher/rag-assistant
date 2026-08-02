@@ -8,9 +8,20 @@ const queryStates = new Set([
 
 const maxConversationIdLength = 512;
 const maxVisibleCitations = 8;
+const maxRetainedTurns = 50;
+const detailConcurrency = 4;
+const detailTimeoutMs = 8000;
 
 export function visibleCitationLimit() {
   return maxVisibleCitations;
+}
+
+export function retainedTurnLimit() {
+  return maxRetainedTurns;
+}
+
+export function detailHydrationConcurrency() {
+  return detailConcurrency;
 }
 
 function isRecord(value) {
@@ -19,7 +30,7 @@ function isRecord(value) {
 
 export function normalizeConversationId(value) {
   if (typeof value !== "string" || value.length === 0 || value.length > maxConversationIdLength) return null;
-  if (/^[\s]|[\s]$|[\u0000-\u001f\u007f]/.test(value)) return null;
+  if (value.includes("/") || /^[\s]|[\s]$|[\u0000-\u001f\u007f]/.test(value)) return null;
   return value;
 }
 
@@ -79,7 +90,7 @@ export function parseConversation(value) {
 
 function boundedText(value, limit) {
   if (value.length <= limit) return value;
-  return `${value.slice(0, limit).trimEnd()}...`;
+  return `${value.slice(0, limit - 3).trimEnd()}...`;
 }
 
 export function deriveConversationRows(conversations) {
@@ -92,8 +103,10 @@ export function deriveConversationRows(conversations) {
       conversation,
       id: conversation.id,
       turnsCount: conversation.turns.length,
+      retainedTurnOffset: 0,
       preview: boundedText(previewSource.replace(/\s+/g, " "), 120),
       updatedAt: latestTurn?.created_at ?? null,
+      hydrationState: "ready",
     };
   }).sort((left, right) => {
     const dateDifference = (right.updatedAt ? Date.parse(right.updatedAt) : -Infinity)
@@ -107,18 +120,40 @@ export function deriveConversationSummaryRows(summaries) {
     conversation: { id: summary.id, turns: [] },
     id: summary.id,
     turnsCount: summary.turns_count,
+    retainedTurnOffset: 0,
     preview: "Turn details loading...",
     updatedAt: null,
+    hydrationState: "loading",
   })).sort((left, right) => left.id.localeCompare(right.id));
 }
 
 export function mergeConversationRow(rows, conversation) {
   const hydrated = deriveConversationRows([conversation])[0];
-  return rows.map((row) => row.id === hydrated.id ? hydrated : row).sort((left, right) => {
+  const retainedTurns = conversation.turns.slice(-maxRetainedTurns).map((turn) => ({
+    ...turn,
+    ...boundedTurn(turn),
+    hiddenCitationCount: Math.max(0, (turn.citations?.length ?? 0) - maxVisibleCitations),
+  }));
+  const retained = {
+    ...hydrated,
+    conversation: { id: conversation.id, turns: retainedTurns },
+    retainedTurnOffset: conversation.turns.length - retainedTurns.length,
+  };
+  return rows.map((row) => row.id === retained.id ? retained : row).sort((left, right) => {
     const dateDifference = (right.updatedAt ? Date.parse(right.updatedAt) : -Infinity)
       - (left.updatedAt ? Date.parse(left.updatedAt) : -Infinity);
     return dateDifference || left.id.localeCompare(right.id);
   });
+}
+
+export function markConversationRowUnavailable(rows, id) {
+  return rows.map((row) => row.id === id ? {
+    ...row,
+    conversation: { id: row.id, turns: [] },
+    preview: "Turn details unavailable",
+    updatedAt: null,
+    hydrationState: "error",
+  } : row);
 }
 
 export function boundedTurn(turn) {
@@ -131,6 +166,64 @@ export function boundedTurn(turn) {
       ...(citation.snippet ? { snippet: boundedText(citation.snippet, 500) } : {}),
     })),
   };
+}
+
+function abortError(signal) {
+  return signal.reason ?? new DOMException("The request was aborted.", "AbortError");
+}
+
+async function loadDetailWithTimeout(summary, load, parentSignal, timeoutMs) {
+  const controller = new AbortController();
+  const abortFromParent = () => controller.abort(abortError(parentSignal));
+  if (parentSignal?.aborted) abortFromParent();
+  else parentSignal?.addEventListener("abort", abortFromParent, { once: true });
+
+  const timeout = setTimeout(() => {
+    controller.abort(new DOMException("The conversation detail request timed out.", "TimeoutError"));
+  }, timeoutMs);
+  const aborted = new Promise((_, reject) => {
+    if (controller.signal.aborted) reject(abortError(controller.signal));
+    else controller.signal.addEventListener("abort", () => reject(abortError(controller.signal)), { once: true });
+  });
+
+  try {
+    return await Promise.race([load(summary.id, { signal: controller.signal }), aborted]);
+  } finally {
+    clearTimeout(timeout);
+    parentSignal?.removeEventListener("abort", abortFromParent);
+  }
+}
+
+export async function hydrateConversationDetails(summaries, load, options = {}) {
+  const concurrency = Math.max(1, Math.floor(options.concurrency ?? detailConcurrency));
+  const timeoutMs = Math.max(1, Math.floor(options.timeoutMs ?? detailTimeoutMs));
+  const results = new Array(summaries.length);
+  let nextIndex = 0;
+
+  async function worker() {
+    while (!options.signal?.aborted) {
+      const index = nextIndex;
+      nextIndex += 1;
+      if (index >= summaries.length) return;
+
+      const summary = summaries[index];
+      let result;
+      try {
+        const conversation = await loadDetailWithTimeout(summary, load, options.signal, timeoutMs);
+        result = { id: summary.id, status: "fulfilled", conversation };
+      } catch (error) {
+        result = { id: summary.id, status: "rejected", error };
+      }
+      results[index] = result;
+      if (!options.signal?.aborted) options.onResult?.(result);
+    }
+  }
+
+  await Promise.all(Array.from(
+    { length: Math.min(concurrency, summaries.length) },
+    () => worker(),
+  ));
+  return results.filter(Boolean);
 }
 
 export function conversationPath(id) {

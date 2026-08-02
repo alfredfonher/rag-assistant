@@ -11,9 +11,12 @@ import { APIHttpError, deleteConversation, getConversation, listConversationSumm
 import {
   askConversationHref,
   boundedTurn,
+  hydrateConversationDetails,
   deriveConversationSummaryRows,
   describeConversationError,
+  markConversationRowUnavailable,
   mergeConversationRow,
+  retainedTurnLimit,
   visibleCitationLimit,
   type ConversationRow,
 } from "@/lib/conversations.mjs";
@@ -43,6 +46,7 @@ export default function ConversationsPage() {
     controller.current = nextController;
     setLoading(true);
     setError("");
+    setNotice("");
 
     try {
       const summaries = await listConversationSummaries({ signal: nextController.signal });
@@ -56,24 +60,25 @@ export default function ConversationsPage() {
       });
       setLoading(false);
 
-      for (const summary of summaries) {
-        void getConversation(summary.id, { signal: nextController.signal }).then((conversation) => {
-          if (mounted.current && controller.current === nextController) {
-            setRows((current) => mergeConversationRow(current, conversation));
-          }
-        }).catch((detailError) => {
-          if (!mounted.current || nextController.signal.aborted || controller.current !== nextController) return;
-          if (detailError instanceof APIHttpError && detailError.status === 404) {
+      void hydrateConversationDetails(summaries, getConversation, {
+        signal: nextController.signal,
+        onResult: (result) => {
+          if (!mounted.current || controller.current !== nextController) return;
+          if (result.status === "fulfilled") {
+            setRows((current) => mergeConversationRow(current, result.conversation));
+          } else if (result.error instanceof APIHttpError && result.error.status === 404) {
             missingCount += 1;
             setRows((current) => {
-              const remaining = current.filter((row) => row.id !== summary.id);
-              setSelectedId((selected) => selected === summary.id ? remaining[0]?.id ?? null : selected);
+              const remaining = current.filter((row) => row.id !== result.id);
+              setSelectedId((selected) => selected === result.id ? remaining[0]?.id ?? null : selected);
               return remaining;
             });
             setNotice(`${missingCount} conversation ${missingCount === 1 ? "was" : "were"} removed while the list loaded.`);
+          } else {
+            setRows((current) => markConversationRowUnavailable(current, result.id));
           }
-        });
-      }
+        },
+      });
     } catch (loadError) {
       if (mounted.current && !nextController.signal.aborted) setError(describeConversationError(loadError));
     } finally {
@@ -161,6 +166,8 @@ export default function ConversationsPage() {
                 <li key={row.id}>
                   <button type="button" onClick={() => setSelectedId(row.id)} aria-pressed={selectedId === row.id} className={`w-full rounded-xl border p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${selectedId === row.id ? "border-primary/50 bg-primary/10" : "border-border bg-card hover:bg-muted/60"}`}>
                     <p className="line-clamp-2 text-sm font-semibold leading-5">{row.preview}</p>
+                    {row.hydrationState === "loading" && <span className="mt-2 inline-flex items-center gap-1.5 text-xs text-muted-foreground"><Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" /> Loading details</span>}
+                    {row.hydrationState === "error" && <span className="mt-2 inline-flex items-center gap-1.5 text-xs text-amber-200"><AlertCircle className="h-3 w-3" aria-hidden="true" /> Details unavailable</span>}
                     <div className="mt-3 flex items-center justify-between gap-3 text-xs text-muted-foreground"><span>{row.turnsCount} {row.turnsCount === 1 ? "turn" : "turns"}</span><time dateTime={row.updatedAt ?? undefined}>{formatTimestamp(row.updatedAt)}</time></div>
                     <p className="mt-2 truncate font-mono text-[10px] text-muted-foreground">{row.id}</p>
                   </button>
@@ -173,23 +180,26 @@ export default function ConversationsPage() {
             <section aria-labelledby="conversation-detail-heading" className="min-w-0">
               <Card className="overflow-hidden">
                 <div className="flex flex-col gap-4 border-b border-border p-5 sm:flex-row sm:items-start sm:justify-between sm:p-6">
-                  <div className="min-w-0"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Conversation detail</p><h2 id="conversation-detail-heading" className="mt-2 break-all font-mono text-sm">{selected.id}</h2><p className="mt-2 text-sm text-muted-foreground">{selected.turnsCount} {selected.turnsCount === 1 ? "turn" : "turns"} · Updated {formatTimestamp(selected.updatedAt)}</p></div>
+                  <div className="min-w-0"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Conversation detail</p><h2 id="conversation-detail-heading" className="mt-2 break-all font-mono text-sm">{selected.id}</h2><p className="mt-2 text-sm text-muted-foreground">{selected.turnsCount} {selected.turnsCount === 1 ? "turn" : "turns"}{selected.hydrationState === "ready" ? ` · Updated ${formatTimestamp(selected.updatedAt)}` : selected.hydrationState === "loading" ? " · Details loading" : " · Details unavailable"}</p></div>
                   <div className="flex shrink-0 flex-wrap gap-2"><Button asChild><Link href={askConversationHref(selected.id)}>Continue in Ask <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" /></Link></Button><Button type="button" variant="outline" onClick={() => { setError(""); setDeleteError(""); setConfirmOpen(true); }}><Trash2 className="mr-2 h-4 w-4" aria-hidden="true" /> Delete</Button></div>
                 </div>
-                <ol className="divide-y divide-border">
+                {selected.hydrationState === "loading" && <div className="flex items-center gap-3 p-6 text-sm text-muted-foreground" role="status"><Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Loading conversation details...</div>}
+                {selected.hydrationState === "error" && <div className="flex gap-3 p-6 text-sm text-amber-100" role="alert"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" /><div><p className="font-semibold">Conversation details unavailable</p><p className="mt-1 leading-6 text-muted-foreground">The detail request failed or timed out. Refresh to try again.</p></div></div>}
+                {selected.hydrationState === "ready" && selected.retainedTurnOffset > 0 && <p className="border-b border-border px-6 py-3 text-xs text-muted-foreground">Showing the most recent {retainedTurnLimit()} of {selected.turnsCount} turns.</p>}
+                {selected.hydrationState === "ready" && <ol className="divide-y divide-border">
                   {selected.conversation.turns.map((turn, index) => {
                     const visible = boundedTurn(turn);
-                    const hiddenCitations = (turn.citations?.length ?? 0) - visible.citations.length;
+                    const hiddenCitations = turn.hiddenCitationCount ?? 0;
                     return (
                       <li key={`${turn.created_at}:${index}`} className="space-y-5 p-5 sm:p-6">
-                        <div className="flex items-center justify-between gap-3"><h3 className="font-semibold">Turn {index + 1}</h3><time dateTime={turn.created_at} className="text-xs text-muted-foreground">{formatTimestamp(turn.created_at)}</time></div>
+                        <div className="flex items-center justify-between gap-3"><h3 className="font-semibold">Turn {selected.retainedTurnOffset + index + 1}</h3><time dateTime={turn.created_at} className="text-xs text-muted-foreground">{formatTimestamp(turn.created_at)}</time></div>
                         <section><h4 className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Question</h4><p className="mt-2 whitespace-pre-wrap break-words rounded-xl bg-muted px-4 py-3 text-sm leading-6">{visible.query || "No question text returned."}</p></section>
                         <section><h4 className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Answer</h4><p className="mt-2 whitespace-pre-wrap break-words text-sm leading-7">{visible.answer || (turn.state === "insufficient_context" ? "Insufficient context to answer." : "No answer text returned.")}</p><p className="mt-2 text-xs capitalize text-muted-foreground">State: {turn.state.replace("_", " ")}</p></section>
                         {visible.citations.length > 0 && <section><h4 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground"><BookOpen className="h-3.5 w-3.5" aria-hidden="true" /> Citations</h4><ol className="mt-3 grid gap-3 xl:grid-cols-2">{visible.citations.map((citation, citationIndex) => <li key={`${citation.document_id}:${citation.chunk_id}:${citationIndex}`} className="rounded-xl border border-border bg-background/40 p-4"><p className="break-all font-mono text-xs text-primary">{citation.document_id}</p><p className="mt-1 break-all font-mono text-[11px] text-muted-foreground">Chunk {citation.chunk_id}</p>{citation.snippet && <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-muted-foreground">{citation.snippet}</p>}</li>)}</ol>{hiddenCitations > 0 && <p className="mt-3 text-xs text-muted-foreground">Showing {visibleCitationLimit()} citations. {hiddenCitations} additional {hiddenCitations === 1 ? "citation is" : "citations are"} hidden.</p>}</section>}
                       </li>
                     );
                   })}
-                </ol>
+                </ol>}
               </Card>
             </section>
           )}
