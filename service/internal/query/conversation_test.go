@@ -2,6 +2,7 @@ package query
 
 import (
 	"context"
+	"os"
 	"testing"
 	"time"
 
@@ -48,5 +49,24 @@ func TestNewConversationIDIsStableOnceAssigned(t *testing.T) {
 	second := NewConversationID()
 	if first == "" || second == "" || first == second {
 		t.Fatalf("expected distinct non-empty conversation ids, got %q and %q", first, second)
+	}
+}
+
+func TestConversationStoreAppendRollsBackAfterSaveFailure(t *testing.T) {
+	path := t.TempDir() + "/conversations.json"
+	store, err := NewConversationStore(path)
+	if err != nil {
+		t.Fatalf("create store: %v", err)
+	}
+	if err := os.Mkdir(path, 0o755); err != nil {
+		t.Fatalf("block persistence path: %v", err)
+	}
+
+	err = store.Append(context.Background(), "conv-1", ConversationTurn{Query: "question", State: domain.QueryStateAnswered})
+	if err == nil {
+		t.Fatal("expected append to fail")
+	}
+	if conversation, ok := store.Get("conv-1"); ok {
+		t.Fatalf("failed append left an in-memory ghost: %#v", conversation)
 	}
 }

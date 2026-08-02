@@ -49,21 +49,21 @@ func New(retriever Retriever, composer AnswerComposer, stores ...ConversationSto
 func (s *Service) Query(ctx context.Context, request domain.QueryRequest) domain.QueryResponse {
 	resolved := s.resolve(ctx, request)
 	response := resolved.response
-	if s.store != nil && (response.State == domain.QueryStateAnswered || response.State == domain.QueryStateInsufficientContext) {
-		_ = s.store.Append(ctx, response.ConversationID, ConversationTurn{
-			Query:     request.Query,
-			State:     response.State,
-			Answer:    response.Answer,
-			Citations: response.Citations,
-			CreatedAt: time.Now().UTC(),
-		})
-	}
+	_ = s.persistTerminalTurn(ctx, request, response)
 	return response
 }
 
 func (s *Service) Stream(ctx context.Context, request domain.QueryRequest) []domain.QueryResponse {
 	resolved := s.resolve(ctx, request)
 	response := resolved.response
+	if err := s.persistTerminalTurn(ctx, request, response); err != nil {
+		return []domain.QueryResponse{
+			streamFrame(domain.QueryStreamEventStart, domain.QueryStreamKindLifecycle, domain.QueryStateStreaming, response.ConversationID, "", nil, nil),
+			streamFrame(domain.QueryStreamEventDone, domain.QueryStreamKindCompletion, domain.QueryStateUnsupported, response.ConversationID, "", nil, &domain.APIError{
+				Code: "conversation_persistence_unavailable", Message: "conversation persistence unavailable",
+			}),
+		}
+	}
 	if response.State == domain.QueryStateUnsupported {
 		return []domain.QueryResponse{
 			streamFrame(domain.QueryStreamEventStart, domain.QueryStreamKindLifecycle, domain.QueryStateStreaming, response.ConversationID, "", nil, nil),
@@ -78,6 +78,16 @@ func (s *Service) Stream(ctx context.Context, request domain.QueryRequest) []dom
 		streamFrame(domain.QueryStreamEventCitation, domain.QueryStreamKindCitation, domain.QueryStateStreaming, response.ConversationID, "", response.Citations, nil),
 		streamFrame(domain.QueryStreamEventDone, domain.QueryStreamKindCompletion, response.State, response.ConversationID, response.Answer, response.Citations, response.Error),
 	}
+}
+
+func (s *Service) persistTerminalTurn(ctx context.Context, request domain.QueryRequest, response domain.QueryResponse) error {
+	if s.store == nil || (response.State != domain.QueryStateAnswered && response.State != domain.QueryStateInsufficientContext) {
+		return nil
+	}
+	return s.store.Append(ctx, response.ConversationID, ConversationTurn{
+		Query: request.Query, State: response.State, Answer: response.Answer,
+		Citations: response.Citations, CreatedAt: time.Now().UTC(),
+	})
 }
 
 func (s *Service) resolve(ctx context.Context, request domain.QueryRequest) resolvedQuery {

@@ -1,6 +1,8 @@
 import type {
   APIError,
   Citation,
+  Conversation,
+  ConversationSummary,
   Document,
   IngestDocumentRequest,
   IngestDocumentResponse,
@@ -15,6 +17,11 @@ import type {
 } from "@/lib/contracts";
 import { SseParser } from "@/lib/query-stream.mjs";
 import { APIHttpError, parseIngestResponse } from "@/lib/ingest-response.mjs";
+import {
+  conversationPath,
+  parseConversation,
+  parseConversationSummaries,
+} from "@/lib/conversations.mjs";
 
 export { APIHttpError } from "@/lib/ingest-response.mjs";
 
@@ -134,6 +141,33 @@ export async function ingestDocument(
   throw new MalformedAPIResponseError("The backend returned an invalid ingest response.");
 }
 
+export async function listConversationSummaries(options: { signal?: AbortSignal } = {}): Promise<ConversationSummary[]> {
+  const value = await request<unknown>(endpoints.resource("conversations"), {
+    cache: "no-store",
+    signal: options.signal,
+  });
+  const parsed = parseConversationSummaries(value);
+  if (!parsed) throw new MalformedAPIResponseError("The backend returned an invalid conversation list.");
+  return parsed;
+}
+
+export async function getConversation(id: string, options: { signal?: AbortSignal } = {}): Promise<Conversation> {
+  const value = await request<unknown>(conversationPath(id), {
+    cache: "no-store",
+    signal: options.signal,
+  });
+  const parsed = parseConversation(value);
+  if (!parsed) throw new MalformedAPIResponseError("The backend returned an invalid conversation.");
+  return parsed;
+}
+
+export function deleteConversation(id: string, options: { signal?: AbortSignal } = {}): Promise<void> {
+  return request<void>(conversationPath(id), {
+    method: "DELETE",
+    signal: options.signal,
+  });
+}
+
 async function check(path: string): Promise<ServiceStatus> {
   const response = await fetch(`${API_BASE_URL}${path}`, { cache: "no-store" });
   if (!response.ok) {
@@ -153,6 +187,11 @@ export const api = {
   documents: {
     list: listDocuments,
     ingest: ingestDocument,
+  },
+  conversations: {
+    list: listConversationSummaries,
+    get: getConversation,
+    remove: deleteConversation,
   },
   list: <T extends ResourceRecord>(resource: ResourceName) =>
     request<T[]>(endpoints.resource(resource)),

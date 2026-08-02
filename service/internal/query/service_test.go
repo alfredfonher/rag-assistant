@@ -27,6 +27,15 @@ func (s stubComposer) Compose(context.Context, domain.QueryRequest, []domain.Cit
 	return s.answer, s.err
 }
 
+type failingConversationStore struct {
+	appends int
+}
+
+func (s *failingConversationStore) Append(context.Context, string, ConversationTurn) error {
+	s.appends++
+	return errors.New("save failed")
+}
+
 func TestQuery(t *testing.T) {
 	t.Parallel()
 
@@ -231,6 +240,85 @@ func TestStream(t *testing.T) {
 			}
 			if got := len(frames[3].Citations); got != tt.wantCites {
 				t.Fatalf("expected citation frame to contain %d citations, got %d", tt.wantCites, got)
+			}
+		})
+	}
+}
+
+func TestStreamPersistsOnlyTerminalSuccessfulTurns(t *testing.T) {
+	tests := []struct {
+		name        string
+		retriever   Retriever
+		composer    AnswerComposer
+		request     domain.QueryRequest
+		wantPersist bool
+	}{
+		{"answered continuation", stubRetriever{citations: []domain.Citation{{DocumentID: "doc-1", ChunkID: "chunk-1"}}}, stubComposer{answer: "answer"}, domain.QueryRequest{Query: "follow up", ConversationID: "conv-1"}, true},
+		{"insufficient context", stubRetriever{}, nil, domain.QueryRequest{Query: "unknown"}, true},
+		{"unsupported retrieval error", stubRetriever{err: errors.New("offline")}, nil, domain.QueryRequest{Query: "fails", ConversationID: "conv-error"}, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store, err := NewConversationStore(t.TempDir() + "/conversations.json")
+			if err != nil {
+				t.Fatalf("create conversation store: %v", err)
+			}
+			frames := New(tt.retriever, tt.composer, store).Stream(context.Background(), tt.request)
+			terminal := frames[len(frames)-1]
+			conversation, persisted := store.Get(terminal.ConversationID)
+			if persisted != tt.wantPersist {
+				t.Fatalf("expected persisted=%v, got %#v", tt.wantPersist, conversation)
+			}
+			if !tt.wantPersist {
+				return
+			}
+			if len(conversation.Turns) != 1 {
+				t.Fatalf("expected exactly one persisted turn, got %#v", conversation.Turns)
+			}
+			turn := conversation.Turns[0]
+			if conversation.ID != terminal.ConversationID || (tt.request.ConversationID != "" && terminal.ConversationID != tt.request.ConversationID) {
+				t.Fatalf("unexpected continuation id: request=%q terminal=%q persisted=%q", tt.request.ConversationID, terminal.ConversationID, conversation.ID)
+			}
+			if turn.Query != tt.request.Query || turn.State != terminal.State || turn.Answer != terminal.Answer || len(turn.Citations) != len(terminal.Citations) || turn.CreatedAt.IsZero() {
+				t.Fatalf("persisted turn does not match terminal response: turn=%#v terminal=%#v", turn, terminal)
+			}
+		})
+	}
+}
+
+func TestStreamReturnsErrorTerminalWhenPersistenceFails(t *testing.T) {
+	tests := []struct {
+		name      string
+		retriever Retriever
+		composer  AnswerComposer
+	}{
+		{"answered", stubRetriever{citations: []domain.Citation{{DocumentID: "doc-1", ChunkID: "chunk-1"}}}, stubComposer{answer: "answer"}},
+		{"insufficient context", stubRetriever{}, nil},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store := &failingConversationStore{}
+			frames := New(tt.retriever, tt.composer, store).Stream(context.Background(), domain.QueryRequest{
+				Query: "question", ConversationID: "conv-1",
+			})
+
+			if store.appends != 1 {
+				t.Fatalf("expected one append attempt, got %d", store.appends)
+			}
+			if len(frames) != 2 || frames[0].Event != domain.QueryStreamEventStart {
+				t.Fatalf("expected start and error terminal frames, got %#v", frames)
+			}
+			terminal := frames[1]
+			if terminal.Event != domain.QueryStreamEventDone || terminal.Kind != domain.QueryStreamKindCompletion || terminal.State != domain.QueryStateUnsupported {
+				t.Fatalf("expected unsupported completion frame, got %#v", terminal)
+			}
+			if terminal.ConversationID != "conv-1" || terminal.Answer != "" || len(terminal.Citations) != 0 {
+				t.Fatalf("expected preserved id without fabricated success, got %#v", terminal)
+			}
+			if terminal.Error == nil || terminal.Error.Code != "conversation_persistence_unavailable" || terminal.Error.Message != "conversation persistence unavailable" {
+				t.Fatalf("unexpected persistence error contract: %#v", terminal.Error)
 			}
 		})
 	}

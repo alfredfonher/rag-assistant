@@ -1,6 +1,6 @@
 # RAG Assistant UI
 
-Standalone Next.js frontend for the RAG Assistant backend. It provides responsive navigation, streamed Ask and document workflows, honest resource empty states, typed API boundaries, and browser-side health/readiness checks.
+Standalone Next.js frontend for the RAG Assistant backend. It provides responsive navigation, streamed Ask, document, and conversation workflows, honest resource empty states, typed API boundaries, and browser-side health/readiness checks.
 
 ## Requirements
 
@@ -35,10 +35,11 @@ pnpm install --offline --frozen-lockfile
 - App Router routes for overview, queries, documents, collections, agents, conversations, and system status
 - A streamed Ask workflow with cancellation, page-session follow-ups, explicit query phases, plain-text answers, and deduplicated citations
 - A live Documents page with typed registry listing, refresh/error/empty states, and cancellable ingestion of `.txt`, `.md`, and `.markdown` paths relative to the backend's configured `RAG_INGEST_ROOT`
+- A live Conversations page with deterministic history, bounded turn/citation rendering, confirmed deletion, and safe continuation into Ask through `conversation_id`
 - Ingestion reports indexed, unindexed, and unsupported outcomes, but does not create CRUD registry records: the backend ingest service writes the retrieval index independently from `DocumentRepo`
 - A typed fetch/`ReadableStream` SSE client with incremental parsing, terminal-frame validation, and distinct backend, HTTP, malformed-stream, and cancellation failures; `EventSource` is not used
-- Exact typed contracts for document registry records and relative-path ingestion responses without normalized document content, plus health, readiness, query frames, and remaining CRUD resources
+- Exact runtime-validated contracts for conversation summaries/details, document registry records, and relative-path ingestion responses without normalized document content, plus health, readiness, query frames, and remaining CRUD resources
 - No fabricated metrics, records, conversations, or backend response fields
-- CRUD controls remain intentionally unwired until their concrete backend payload schemas are validated
+- Rename remains intentionally unavailable because the backend does not persist conversation names
 
 This app is independent from Staffflow. Staffflow supplied only known-compatible dependency versions and general configuration patterns; none of its business pages, services, authentication, data, assets, or environment files are included.

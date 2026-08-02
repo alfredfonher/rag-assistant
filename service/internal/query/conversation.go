@@ -59,11 +59,20 @@ func (s *FileConversationStore) Append(ctx context.Context, id string, turn Conv
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	conversation := s.conversations[id]
+	conversation, existed := s.conversations[id]
+	original := conversation
 	conversation.ID = id
 	conversation.Turns = append(conversation.Turns, cloneTurn(turn))
 	s.conversations[id] = conversation
-	return s.saveLocked()
+	if err := s.saveLocked(); err != nil {
+		if existed {
+			s.conversations[id] = original
+		} else {
+			delete(s.conversations, id)
+		}
+		return err
+	}
+	return nil
 }
 
 func (s *FileConversationStore) Get(id string) (Conversation, bool) {

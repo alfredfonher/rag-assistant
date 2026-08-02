@@ -17,6 +17,7 @@ import {
   type QueryPhase,
   type QueryViewState,
 } from "@/lib/query-stream.mjs";
+import { normalizeConversationId } from "@/lib/conversations.mjs";
 
 type RequestIssue = {
   kind: "unavailable" | "http" | "malformed" | "cancelled";
@@ -32,13 +33,17 @@ const phaseLabels: Record<QueryPhase | "idle", string> = {
   error: "Query stopped",
 };
 
-export default function AskPage() {
+export default function AskPage({ searchParams }: { searchParams?: { conversation_id?: string | string[] } }) {
+  const navigatedConversationId = normalizeConversationId(
+    Array.isArray(searchParams?.conversation_id) ? null : searchParams?.conversation_id,
+  );
   const [query, setQuery] = useState("");
   const [submittedQuery, setSubmittedQuery] = useState("");
   const [view, setView] = useState<QueryViewState | null>(null);
   const [issue, setIssue] = useState<RequestIssue | null>(null);
   const [validationError, setValidationError] = useState("");
-  const conversationId = useRef<string>();
+  const [resumedConversationId, setResumedConversationId] = useState<string | null>(navigatedConversationId);
+  const conversationId = useRef<string | undefined>(navigatedConversationId ?? undefined);
   const abortController = useRef<AbortController>();
   const mounted = useRef(true);
 
@@ -81,6 +86,7 @@ export default function AskPage() {
           conversationId.current = next.conversationId;
           return next;
         });
+        if (message.frame.conversation_id) setResumedConversationId(message.frame.conversation_id);
       }
     } catch (error) {
       if (!mounted.current) return;
@@ -134,7 +140,7 @@ export default function AskPage() {
                 <span className={`h-2.5 w-2.5 rounded-full ${active ? "animate-pulse bg-primary" : phase === "error" ? "bg-red-400" : "bg-muted-foreground"}`} />
                 <p className="text-sm font-medium" aria-live="polite" aria-atomic="true">{liveStatus}</p>
               </div>
-              {conversationId.current && <span className="hidden text-xs text-muted-foreground sm:inline">Follow-up context active</span>}
+              {resumedConversationId && <span className="hidden text-xs text-muted-foreground sm:inline">Resumed conversation context active</span>}
             </div>
 
             <div className="flex-1 p-5 sm:p-7">
@@ -247,9 +253,9 @@ export default function AskPage() {
             <div><dt className="text-muted-foreground">Endpoint</dt><dd className="mt-1 font-mono">POST /v1/query/stream</dd></div>
             <div><dt className="text-muted-foreground">Transport</dt><dd className="mt-1">SSE over same-origin fetch</dd></div>
             <div><dt className="text-muted-foreground">Phase</dt><dd className="mt-1 capitalize">{phase}</dd></div>
-            <div><dt className="text-muted-foreground">Conversation</dt><dd className="mt-1 break-all font-mono">{conversationId.current ?? "Created by backend"}</dd></div>
+            <div><dt className="text-muted-foreground">Conversation</dt><dd className="mt-1 break-all font-mono">{resumedConversationId ?? "Created by backend"}</dd></div>
           </dl>
-          <p className="mt-5 border-t border-border pt-4 text-xs leading-5 text-muted-foreground">Follow-up questions reuse the conversation identifier returned during this page session.</p>
+          <p className="mt-5 border-t border-border pt-4 text-xs leading-5 text-muted-foreground">{resumedConversationId ? "The next query will continue this backend-persisted conversation." : "Follow-up questions reuse the conversation identifier returned during this page session."}</p>
         </Card>
       </div>
     </div>

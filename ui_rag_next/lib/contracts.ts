@@ -49,6 +49,24 @@ export interface QueryStreamMessage {
   frame: QueryResponse;
 }
 
+export interface ConversationSummary {
+  id: string;
+  turns_count: number;
+}
+
+export interface ConversationTurn {
+  query: string;
+  state: QueryState;
+  answer: string;
+  citations?: Citation[];
+  created_at: string;
+}
+
+export interface Conversation {
+  id: string;
+  turns: ConversationTurn[];
+}
+
 export interface IngestDocumentRequest {
   path: string;
 }
@@ -83,7 +101,6 @@ export interface ResourceRecord {
 
 export type Agent = ResourceRecord;
 export type Collection = ResourceRecord;
-export type Conversation = ResourceRecord;
 
 export type ResourceName =
   | "agents"
