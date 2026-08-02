@@ -107,7 +107,7 @@ export default function DocumentsPage() {
       if (response.state === "indexed") await refreshDocuments();
     } catch (error) {
       if (!mounted.current) return;
-      setIngestError(controller.signal.aborted ? "Ingestion was cancelled." : describeDocumentRequestError(error));
+      setIngestError(describeDocumentRequestError(controller.signal.aborted ? { name: "AbortError" } : error));
     } finally {
       if (ingestController.current === controller) ingestController.current = undefined;
       if (mounted.current) setIngesting(false);
@@ -201,7 +201,7 @@ export default function DocumentsPage() {
               <p id="document-path-help" className="mt-2 text-xs leading-5 text-muted-foreground">Relative to RAG_INGEST_ROOT. Supported extensions: .txt, .md, .markdown</p>
               <p id="document-path-error" className="mt-1 min-h-5 text-xs text-red-300" role={pathError ? "alert" : undefined}>{pathError}</p>
               <div className="mt-3 flex justify-end gap-3">
-                {ingesting && <Button type="button" variant="outline" onClick={() => ingestController.current?.abort()}><Square className="mr-2 h-3.5 w-3.5 fill-current" aria-hidden="true" />Cancel</Button>}
+                {ingesting && <Button type="button" variant="outline" onClick={() => ingestController.current?.abort()}><Square className="mr-2 h-3.5 w-3.5 fill-current" aria-hidden="true" />Stop waiting</Button>}
                 <Button type="submit" disabled={ingesting || Boolean(validateDocumentPath(path))}>{ingesting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" /> : <Send className="mr-2 h-4 w-4" aria-hidden="true" />}Ingest</Button>
               </div>
             </form>

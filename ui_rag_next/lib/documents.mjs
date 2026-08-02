@@ -44,6 +44,9 @@ export function createIngestResult(response) {
 }
 
 export function describeDocumentRequestError(error) {
+  if (error?.name === "AbortError") {
+    return "Stopped waiting for the ingestion response. The server may still complete the operation; check the document index before trying again.";
+  }
   if (error?.name === "BackendUnavailableError") {
     return "The backend is unavailable. Check the service and try again.";
   }

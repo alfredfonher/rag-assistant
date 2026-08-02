@@ -14,6 +14,9 @@ import type {
   ServiceStatus,
 } from "@/lib/contracts";
 import { SseParser } from "@/lib/query-stream.mjs";
+import { APIHttpError, parseIngestResponse } from "@/lib/ingest-response.mjs";
+
+export { APIHttpError } from "@/lib/ingest-response.mjs";
 
 export const API_BASE_URL = "/backend";
 
@@ -25,16 +28,6 @@ export const endpoints = {
   ingest: "/v1/documents/ingest",
   resource: (name: ResourceName) => `/v1/${name}`,
 } as const;
-
-export class APIHttpError extends Error {
-  constructor(
-    public readonly status: number,
-    public readonly backendError?: APIError,
-  ) {
-    super(backendError?.message ?? `The backend returned HTTP ${status}.`);
-    this.name = "APIHttpError";
-  }
-}
 
 export class MalformedAPIResponseError extends Error {
   constructor(message: string, public readonly cause?: unknown) {
@@ -70,17 +63,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 const documentStatuses = new Set(["pending", "indexing", "ready", "error", "outdated"]);
-const ingestStates = new Set(["indexed", "unindexed", "unsupported"]);
-
 function isAPIError(value: unknown): value is APIError {
   return isRecord(value) && typeof value.code === "string" && typeof value.message === "string";
-}
-
-function isCitation(value: unknown): value is Citation {
-  return isRecord(value)
-    && typeof value.document_id === "string"
-    && typeof value.chunk_id === "string"
-    && (value.snippet === undefined || typeof value.snippet === "string");
 }
 
 function isDocument(value: unknown): value is Document {
@@ -95,15 +79,6 @@ function isDocument(value: unknown): value is Document {
     && (value.error_message === undefined || typeof value.error_message === "string")
     && typeof value.created_at === "string"
     && typeof value.updated_at === "string";
-}
-
-function isIngestResponse(value: unknown): value is IngestDocumentResponse {
-  return isRecord(value)
-    && typeof value.state === "string"
-    && ingestStates.has(value.state)
-    && (value.document_id === undefined || typeof value.document_id === "string")
-    && (value.citations === undefined || (Array.isArray(value.citations) && value.citations.every(isCitation)))
-    && (value.error === undefined || isAPIError(value.error));
 }
 
 async function readJSON(response: Response, signal?: AbortSignal): Promise<unknown> {
@@ -154,8 +129,8 @@ export async function ingestDocument(
   }
 
   const value = await readJSON(response, options.signal);
-  if (isIngestResponse(value)) return value;
-  if (!response.ok && isAPIError(value)) throw new APIHttpError(response.status, value);
+  const parsed = parseIngestResponse(response.status, response.ok, value);
+  if (parsed) return parsed as IngestDocumentResponse;
   throw new MalformedAPIResponseError("The backend returned an invalid ingest response.");
 }
 

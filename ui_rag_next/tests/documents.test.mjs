@@ -6,6 +6,7 @@ import {
   describeDocumentRequestError,
   validateDocumentPath,
 } from "../lib/documents.mjs";
+import { APIHttpError, parseIngestResponse } from "../lib/ingest-response.mjs";
 
 test("path validation requires a supported relative document path", () => {
   assert.equal(validateDocumentPath("   "), "Enter a path relative to the configured ingest root.");
@@ -34,4 +35,26 @@ test("request errors prefer backend detail and distinguish transport failures", 
   assert.equal(describeDocumentRequestError({ name: "APIHttpError", status: 422, backendError: { message: "empty document" } }), "empty document");
   assert.equal(describeDocumentRequestError({ name: "APIHttpError", status: 503 }), "The backend is unavailable (HTTP 503).");
   assert.equal(describeDocumentRequestError({ name: "MalformedAPIResponseError", message: "Invalid list." }), "Invalid list.");
+});
+
+test("non-success ingest envelopes retain backend status and error", () => {
+  const backendError = { code: "ingest_root_unavailable", message: "configured ingest root is unavailable" };
+  assert.throws(
+    () => parseIngestResponse(503, false, { state: "unsupported", error: backendError }),
+    (error) => error instanceof APIHttpError
+      && error.status === 503
+      && error.backendError === backendError,
+  );
+});
+
+test("successful ingest envelopes remain valid responses", () => {
+  const response = { state: "indexed", document_id: "guide", citations: [] };
+  assert.equal(parseIngestResponse(201, true, response), response);
+});
+
+test("stopping an ingest wait does not claim server-side cancellation", () => {
+  assert.equal(
+    describeDocumentRequestError({ name: "AbortError" }),
+    "Stopped waiting for the ingestion response. The server may still complete the operation; check the document index before trying again.",
+  );
 });

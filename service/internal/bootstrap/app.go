@@ -53,7 +53,10 @@ func New() (*App, error) {
 	}
 
 	server := api.NewServerWithDeps(cfg.ServiceName, api.ServerDeps{
-		Readiness:     readiness.LlamaReadiness{Client: llamaClient},
+		Readiness: readiness.Composite{Checkers: []readiness.Checker{
+			readiness.LlamaReadiness{Client: llamaClient},
+			readiness.IngestRoot{Path: cfg.IngestRoot},
+		}},
 		Ingest:        ingestService,
 		Query:         query.New(persistentRetriever, llama.NewComposer(llamaClient), conversationStore),
 		Agents:        agentRepo,
