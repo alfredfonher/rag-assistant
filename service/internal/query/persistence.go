@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -69,33 +68,33 @@ func (s fileRetrieverStore) Save(ctx context.Context, documents map[string][]mem
 
 	dir := filepath.Dir(s.path)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return fmt.Errorf("%w: %v", ErrPersistenceUnavailable, err)
+		return errors.Join(ErrPersistenceUnavailable, err)
 	}
 
 	tmp, err := os.CreateTemp(dir, filepath.Base(s.path)+".*.tmp")
 	if err != nil {
-		return fmt.Errorf("%w: %v", ErrPersistenceUnavailable, err)
+		return errors.Join(ErrPersistenceUnavailable, err)
 	}
 	defer os.Remove(tmp.Name())
 
 	enc := json.NewEncoder(tmp)
 	if err := enc.Encode(state); err != nil {
 		tmp.Close()
-		return fmt.Errorf("%w: %v", ErrPersistenceUnavailable, err)
+		return errors.Join(ErrPersistenceUnavailable, err)
 	}
 	if err := tmp.Close(); err != nil {
-		return fmt.Errorf("%w: %v", ErrPersistenceUnavailable, err)
+		return errors.Join(ErrPersistenceUnavailable, err)
 	}
 
 	if err := os.Rename(tmp.Name(), s.path); err != nil {
-		return fmt.Errorf("%w: %v", ErrPersistenceUnavailable, err)
+		return errors.Join(ErrPersistenceUnavailable, err)
 	}
 
 	return nil
 }
 
 type persistedRetrieverState struct {
-	Version   int                       `json:"version"`
+	Version   int                         `json:"version"`
 	Documents map[string][]persistedChunk `json:"documents"`
 }
 

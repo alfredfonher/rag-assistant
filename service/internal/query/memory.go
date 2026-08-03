@@ -16,6 +16,7 @@ type MemoryRetriever struct {
 	provider  EmbeddingProvider
 	documents map[string][]memoryChunk
 	store     retrieverStore
+	revision  uint64
 }
 
 type memoryChunk struct {
@@ -71,6 +72,30 @@ func (r *MemoryRetriever) IndexDocument(ctx context.Context, documentID, content
 		return nil, nil
 	}
 
+	indexed, err := r.embedChunks(ctx, chunks)
+	if err != nil {
+		return nil, err
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	updated := cloneDocuments(r.documents)
+	updated[documentID] = cloneChunks(indexed)
+	if err := r.save(ctx, updated); err != nil {
+		return nil, err
+	}
+	r.documents = updated
+	r.revision++
+	return citationsFromChunks(indexed), nil
+}
+
+func (r *MemoryRetriever) embedChunks(ctx context.Context, chunks []memoryChunk) ([]memoryChunk, error) {
 	indexed := make([]memoryChunk, 0, len(chunks))
 	for _, chunk := range chunks {
 		embedding, err := r.provider.EmbedDocument(ctx, chunk.text)
@@ -86,25 +111,7 @@ func (r *MemoryRetriever) IndexDocument(ctx context.Context, documentID, content
 			dimension:  len(embedding),
 		})
 	}
-
-	r.mu.Lock()
-	updated := cloneDocuments(r.documents)
-	updated[documentID] = cloneChunks(indexed)
-	if r.store != nil {
-		if err := r.store.Save(ctx, updated); err != nil {
-			r.mu.Unlock()
-			return nil, fmt.Errorf("%w: %v", ErrPersistenceUnavailable, err)
-		}
-	}
-	r.documents = updated
-	r.mu.Unlock()
-
-	citations := make([]domain.Citation, 0, len(indexed))
-	for _, chunk := range indexed {
-		citations = append(citations, citationFromChunk(chunk))
-	}
-
-	return citations, nil
+	return indexed, nil
 }
 
 func cloneDocuments(documents map[string][]memoryChunk) map[string][]memoryChunk {
@@ -251,6 +258,14 @@ func citationFromChunk(chunk memoryChunk) domain.Citation {
 		ChunkID:    chunk.chunkID,
 		Snippet:    chunk.text,
 	}
+}
+
+func citationsFromChunks(chunks []memoryChunk) []domain.Citation {
+	citations := make([]domain.Citation, 0, len(chunks))
+	for _, chunk := range chunks {
+		citations = append(citations, citationFromChunk(chunk))
+	}
+	return citations
 }
 
 func isZeroVector(vector []float64) bool {
