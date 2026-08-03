@@ -1,6 +1,7 @@
 package persistence_test
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -211,10 +212,10 @@ func TestDocumentRepoFreshState(t *testing.T) {
 		t.Fatalf("expected non-nil empty collection list, got %#v", byCollection)
 	}
 
-	if _, err := repo.Get("missing"); !os.IsNotExist(err) {
+	if _, err := repo.Get("missing"); !errors.Is(err, domain.ErrNotFound) {
 		t.Fatalf("expected not found from Get, got %v", err)
 	}
-	if err := repo.Delete("missing"); !os.IsNotExist(err) {
+	if err := repo.Delete("missing"); !errors.Is(err, domain.ErrNotFound) {
 		t.Fatalf("expected not found from Delete, got %v", err)
 	}
 }

@@ -1,7 +1,7 @@
 package persistence
 
 import (
-	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sync"
@@ -18,8 +18,10 @@ type FileCollectionRepo struct {
 
 func NewFileCollectionRepo(dir string) (*FileCollectionRepo, error) {
 	r := &FileCollectionRepo{path: filepath.Join(dir, "collections.json")}
-	_ = os.MkdirAll(dir, 0o755)
-	if err := r.load(); err != nil && !os.IsNotExist(err) {
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return nil, fmt.Errorf("%w: %v", domain.ErrPersistence, err)
+	}
+	if _, err := r.read(); err != nil {
 		return nil, err
 	}
 	return r, nil
@@ -37,7 +39,7 @@ func (r *FileCollectionRepo) Get(id string) (*domain.Collection, error) {
 			return &data[i], nil
 		}
 	}
-	return nil, os.ErrNotExist
+	return nil, domain.ErrNotFound
 }
 
 func (r *FileCollectionRepo) List() ([]domain.Collection, error) {
@@ -53,7 +55,7 @@ func (r *FileCollectionRepo) ListByAgent(agentID string) ([]domain.Collection, e
 	if err != nil {
 		return nil, err
 	}
-	var out []domain.Collection
+	out := make([]domain.Collection, 0)
 	for _, c := range data {
 		if c.AgentID == agentID {
 			out = append(out, c)
@@ -65,7 +67,15 @@ func (r *FileCollectionRepo) ListByAgent(agentID string) ([]domain.Collection, e
 func (r *FileCollectionRepo) Create(c *domain.Collection) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	data, _ := r.read()
+	data, err := r.read()
+	if err != nil {
+		return err
+	}
+	for i := range data {
+		if data[i].ID == c.ID {
+			return domain.ErrDuplicate
+		}
+	}
 	now := time.Now().UTC()
 	c.CreatedAt = now
 	c.UpdatedAt = now
@@ -76,7 +86,10 @@ func (r *FileCollectionRepo) Create(c *domain.Collection) error {
 func (r *FileCollectionRepo) Update(c *domain.Collection) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	data, _ := r.read()
+	data, err := r.read()
+	if err != nil {
+		return err
+	}
 	for i := range data {
 		if data[i].ID == c.ID {
 			c.CreatedAt = data[i].CreatedAt
@@ -85,47 +98,29 @@ func (r *FileCollectionRepo) Update(c *domain.Collection) error {
 			return r.write(data)
 		}
 	}
-	return os.ErrNotExist
+	return domain.ErrNotFound
 }
 
 func (r *FileCollectionRepo) Delete(id string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	data, _ := r.read()
+	data, err := r.read()
+	if err != nil {
+		return err
+	}
 	for i := range data {
 		if data[i].ID == id {
 			data = append(data[:i], data[i+1:]...)
 			return r.write(data)
 		}
 	}
-	return os.ErrNotExist
+	return domain.ErrNotFound
 }
 
 func (r *FileCollectionRepo) read() ([]domain.Collection, error) {
-	raw, err := os.ReadFile(r.path)
-	if err != nil {
-		return nil, err
-	}
-	var out []domain.Collection
-	return out, json.Unmarshal(raw, &out)
+	return readJSONArray[domain.Collection](r.path)
 }
 
 func (r *FileCollectionRepo) write(data []domain.Collection) error {
-	tmp := r.path + ".tmp"
-	raw, err := json.MarshalIndent(data, "", "  ")
-	if err != nil {
-		return err
-	}
-	if err := os.WriteFile(tmp, raw, 0o644); err != nil {
-		return err
-	}
-	if err := os.Rename(tmp, r.path); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (r *FileCollectionRepo) load() error {
-	_, err := r.read()
-	return err
+	return writeJSONArray(r.path, data)
 }

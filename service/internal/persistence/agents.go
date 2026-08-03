@@ -1,7 +1,7 @@
 package persistence
 
 import (
-	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sync"
@@ -18,8 +18,10 @@ type FileAgentRepo struct {
 
 func NewFileAgentRepo(dir string) (*FileAgentRepo, error) {
 	r := &FileAgentRepo{path: filepath.Join(dir, "agents.json")}
-	_ = os.MkdirAll(dir, 0o755)
-	if err := r.load(); err != nil && !os.IsNotExist(err) {
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return nil, fmt.Errorf("%w: %v", domain.ErrPersistence, err)
+	}
+	if _, err := r.read(); err != nil {
 		return nil, err
 	}
 	return r, nil
@@ -37,7 +39,7 @@ func (r *FileAgentRepo) Get(id string) (*domain.Agent, error) {
 			return &data[i], nil
 		}
 	}
-	return nil, os.ErrNotExist
+	return nil, domain.ErrNotFound
 }
 
 func (r *FileAgentRepo) List() ([]domain.Agent, error) {
@@ -49,7 +51,15 @@ func (r *FileAgentRepo) List() ([]domain.Agent, error) {
 func (r *FileAgentRepo) Create(a *domain.Agent) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	data, _ := r.read()
+	data, err := r.read()
+	if err != nil {
+		return err
+	}
+	for i := range data {
+		if data[i].ID == a.ID {
+			return domain.ErrDuplicate
+		}
+	}
 	now := time.Now().UTC()
 	a.CreatedAt = now
 	a.UpdatedAt = now
@@ -60,7 +70,10 @@ func (r *FileAgentRepo) Create(a *domain.Agent) error {
 func (r *FileAgentRepo) Update(a *domain.Agent) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	data, _ := r.read()
+	data, err := r.read()
+	if err != nil {
+		return err
+	}
 	for i := range data {
 		if data[i].ID == a.ID {
 			a.CreatedAt = data[i].CreatedAt
@@ -69,47 +82,29 @@ func (r *FileAgentRepo) Update(a *domain.Agent) error {
 			return r.write(data)
 		}
 	}
-	return os.ErrNotExist
+	return domain.ErrNotFound
 }
 
 func (r *FileAgentRepo) Delete(id string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	data, _ := r.read()
+	data, err := r.read()
+	if err != nil {
+		return err
+	}
 	for i := range data {
 		if data[i].ID == id {
 			data = append(data[:i], data[i+1:]...)
 			return r.write(data)
 		}
 	}
-	return os.ErrNotExist
+	return domain.ErrNotFound
 }
 
 func (r *FileAgentRepo) read() ([]domain.Agent, error) {
-	raw, err := os.ReadFile(r.path)
-	if err != nil {
-		return nil, err
-	}
-	var out []domain.Agent
-	return out, json.Unmarshal(raw, &out)
+	return readJSONArray[domain.Agent](r.path)
 }
 
 func (r *FileAgentRepo) write(data []domain.Agent) error {
-	tmp := r.path + ".tmp"
-	raw, err := json.MarshalIndent(data, "", "  ")
-	if err != nil {
-		return err
-	}
-	if err := os.WriteFile(tmp, raw, 0o644); err != nil {
-		return err
-	}
-	if err := os.Rename(tmp, r.path); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (r *FileAgentRepo) load() error {
-	_, err := r.read()
-	return err
+	return writeJSONArray(r.path, data)
 }
