@@ -58,7 +58,7 @@ func (h *AgentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (h *AgentHandler) list(w http.ResponseWriter, _ *http.Request) {
 	list, err := h.repo.List()
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "list_failed", err.Error())
+		writeRegistryError(w, err, "agent")
 		return
 	}
 	writeJSON(w, http.StatusOK, list)
@@ -67,7 +67,7 @@ func (h *AgentHandler) list(w http.ResponseWriter, _ *http.Request) {
 func (h *AgentHandler) get(w http.ResponseWriter, _ *http.Request, id string) {
 	a, err := h.repo.Get(id)
 	if err != nil {
-		writeError(w, http.StatusNotFound, "not_found", "agent not found")
+		writeRegistryError(w, err, "agent")
 		return
 	}
 	writeJSON(w, http.StatusOK, a)
@@ -91,7 +91,7 @@ func (h *AgentHandler) create(w http.ResponseWriter, r *http.Request) {
 	a.UpdatedAt = now
 
 	if err := h.repo.Create(&a); err != nil {
-		writeError(w, http.StatusInternalServerError, "create_failed", err.Error())
+		writeRegistryError(w, err, "agent")
 		return
 	}
 	writeJSON(w, http.StatusCreated, a)
@@ -105,7 +105,7 @@ func (h *AgentHandler) update(w http.ResponseWriter, r *http.Request, id string)
 	}
 	a.ID = id
 	if err := h.repo.Update(&a); err != nil {
-		writeError(w, http.StatusNotFound, "not_found", "agent not found")
+		writeRegistryError(w, err, "agent")
 		return
 	}
 	writeJSON(w, http.StatusOK, a)
@@ -113,7 +113,7 @@ func (h *AgentHandler) update(w http.ResponseWriter, r *http.Request, id string)
 
 func (h *AgentHandler) delete(w http.ResponseWriter, _ *http.Request, id string) {
 	if err := h.repo.Delete(id); err != nil {
-		writeError(w, http.StatusNotFound, "not_found", "agent not found")
+		writeRegistryError(w, err, "agent")
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -158,7 +158,7 @@ func (h *CollectionHandler) list(w http.ResponseWriter, r *http.Request) {
 		list, err = h.repo.List()
 	}
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "list_failed", err.Error())
+		writeRegistryError(w, err, "collection")
 		return
 	}
 	writeJSON(w, http.StatusOK, list)
@@ -167,7 +167,7 @@ func (h *CollectionHandler) list(w http.ResponseWriter, r *http.Request) {
 func (h *CollectionHandler) get(w http.ResponseWriter, _ *http.Request, id string) {
 	c, err := h.repo.Get(id)
 	if err != nil {
-		writeError(w, http.StatusNotFound, "not_found", "collection not found")
+		writeRegistryError(w, err, "collection")
 		return
 	}
 	writeJSON(w, http.StatusOK, c)
@@ -195,7 +195,7 @@ func (h *CollectionHandler) create(w http.ResponseWriter, r *http.Request) {
 	c.UpdatedAt = now
 
 	if err := h.repo.Create(&c); err != nil {
-		writeError(w, http.StatusInternalServerError, "create_failed", err.Error())
+		writeRegistryError(w, err, "collection")
 		return
 	}
 	writeJSON(w, http.StatusCreated, c)
@@ -209,7 +209,7 @@ func (h *CollectionHandler) update(w http.ResponseWriter, r *http.Request, id st
 	}
 	c.ID = id
 	if err := h.repo.Update(&c); err != nil {
-		writeError(w, http.StatusNotFound, "not_found", "collection not found")
+		writeRegistryError(w, err, "collection")
 		return
 	}
 	writeJSON(w, http.StatusOK, c)
@@ -217,7 +217,7 @@ func (h *CollectionHandler) update(w http.ResponseWriter, r *http.Request, id st
 
 func (h *CollectionHandler) delete(w http.ResponseWriter, _ *http.Request, id string) {
 	if err := h.repo.Delete(id); err != nil {
-		writeError(w, http.StatusNotFound, "not_found", "collection not found")
+		writeRegistryError(w, err, "collection")
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -271,7 +271,7 @@ func (h *DocumentHandler) list(w http.ResponseWriter, r *http.Request) {
 		list, err = h.repo.List()
 	}
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "list_failed", err.Error())
+		writeRegistryError(w, err, "document")
 		return
 	}
 	writeJSON(w, http.StatusOK, list)
@@ -280,7 +280,7 @@ func (h *DocumentHandler) list(w http.ResponseWriter, r *http.Request) {
 func (h *DocumentHandler) get(w http.ResponseWriter, _ *http.Request, id string) {
 	d, err := h.repo.Get(id)
 	if err != nil {
-		writeError(w, http.StatusNotFound, "not_found", "document not found")
+		writeRegistryError(w, err, "document")
 		return
 	}
 	writeJSON(w, http.StatusOK, d)
@@ -309,7 +309,7 @@ func (h *DocumentHandler) create(w http.ResponseWriter, r *http.Request) {
 	d.UpdatedAt = now
 
 	if err := h.repo.Create(&d); err != nil {
-		writeError(w, http.StatusInternalServerError, "create_failed", err.Error())
+		writeRegistryError(w, err, "document")
 		return
 	}
 	writeJSON(w, http.StatusCreated, d)
@@ -317,7 +317,7 @@ func (h *DocumentHandler) create(w http.ResponseWriter, r *http.Request) {
 
 func (h *DocumentHandler) delete(w http.ResponseWriter, _ *http.Request, id string) {
 	if err := h.repo.Delete(id); err != nil {
-		writeError(w, http.StatusNotFound, "not_found", "document not found")
+		writeRegistryError(w, err, "document")
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -325,7 +325,7 @@ func (h *DocumentHandler) delete(w http.ResponseWriter, _ *http.Request, id stri
 
 func (h *DocumentHandler) reindex(w http.ResponseWriter, _ *http.Request, id string) {
 	if err := h.repo.UpdateStatus(id, domain.DocStatusPending, 0, ""); err != nil {
-		writeError(w, http.StatusNotFound, "not_found", "document not found")
+		writeRegistryError(w, err, "document")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"state": "pending", "document_id": id})

@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"rag-assistant/service/internal/domain"
@@ -34,6 +35,12 @@ func TestNewStartsWithMissingIngestRoot(t *testing.T) {
 	}
 	if app == nil || app.Server == nil {
 		t.Fatalf("expected initialized app, got %#v", app)
+	}
+	registryResponse := httptest.NewRecorder()
+	registryRequest := httptest.NewRequest(http.MethodPost, "/v1/collections", strings.NewReader(`{"name":"orphan","agent_id":"missing"}`))
+	app.Server.Handler().ServeHTTP(registryResponse, registryRequest)
+	if registryResponse.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected registry relationship enforcement, got %d", registryResponse.Code)
 	}
 
 	assertReadiness(t, app, http.StatusServiceUnavailable, false, "ingest-root")

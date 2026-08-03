@@ -10,6 +10,7 @@ import (
 	"rag-assistant/service/internal/persistence"
 	"rag-assistant/service/internal/query"
 	"rag-assistant/service/internal/readiness"
+	"rag-assistant/service/internal/registry"
 )
 
 type App struct {
@@ -47,6 +48,7 @@ func New() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
+	registryService := registry.New(agentRepo, collectionRepo, documentRepo)
 	ingestService, err := ingest.New(persistentRetriever, cfg.IngestRoot)
 	if err != nil {
 		return nil, err
@@ -59,9 +61,9 @@ func New() (*App, error) {
 		}},
 		Ingest:        ingestService,
 		Query:         query.New(persistentRetriever, llama.NewComposer(llamaClient), conversationStore),
-		Agents:        agentRepo,
-		Collections:   collectionRepo,
-		Documents:     documentRepo,
+		Agents:        registryService.Agents(),
+		Collections:   registryService.Collections(),
+		Documents:     registryService.Documents(),
 		Conversations: conversationStore,
 	})
 
